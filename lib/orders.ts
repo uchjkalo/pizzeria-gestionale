@@ -59,7 +59,8 @@ export const subscribeToActiveOrders = (callback: (orders: Order[]) => void) => 
   const q = query(ordersRef, orderBy("createdAt", "asc"));
   return onSnapshot(q, snap => {
     callback(
-      snap.docs.map(mapDoc).filter(o => o.status !== "consegnato")
+      snap.docs.map(mapDoc)
+        .filter(o => o.status !== "consegnato" && !o.isCancelled)
     );
   });
 };
@@ -71,7 +72,8 @@ export const subscribeToOrdersToday = (callback: (orders: Order[]) => void) => {
   const q = query(ordersRef, orderBy("createdAt", "asc"));
   return onSnapshot(q, snap => {
     callback(
-      snap.docs.map(mapDoc).filter(o => o.createdAt >= startOfDay)
+      snap.docs.map(mapDoc)
+        .filter(o => o.createdAt >= startOfDay && !o.isCancelled)
     );
   });
 };
@@ -83,7 +85,7 @@ export const subscribeToPaidToday = (callback: (orders: Order[]) => void) => {
   const q = query(ordersRef, where("isPaid", "==", true), orderBy("paidAt", "desc"));
   return onSnapshot(q, snap => {
     callback(
-      snap.docs.map(mapDoc).filter(o => o.paidAt && o.paidAt >= startOfDay)
+  snap.docs.map(mapDoc).filter(o => o.paidAt && o.paidAt >= startOfDay && !o.isCancelled)
     );
   });
 };
@@ -106,4 +108,24 @@ export const resetPaidTodayStats = async (): Promise<number> => {
   docsToDelete.forEach(d => batch.delete(d.ref));
   await batch.commit();
   return docsToDelete.length;
+};
+
+// ── Annulla ordine (escluso da statistiche) ──
+export const cancelOrder = async (orderId: string) => {
+  await updateDoc(doc(db, "orders", orderId), {
+    isCancelled: true,
+    cancelledAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+};
+
+// ── Annulla pagamento (torna in "da pagare") ──
+export const revertPayment = async (orderId: string) => {
+  await updateDoc(doc(db, "orders", orderId), {
+    isPaid: false,
+    paymentMethod: null,
+    felice: null,
+    paidAt: null,
+    updatedAt: serverTimestamp(),
+  });
 };
