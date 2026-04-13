@@ -77,7 +77,6 @@ const totalItems = p.cartItems.reduce((s, i) => s + i.quantity, 0);
 return (
 <div className="flex flex-col h-full">
 
-```
   {/* Tipo ordine */}
   <div className="p-3 border-b border-gray-700 shrink-0 space-y-2">
     <div className="grid grid-cols-3 gap-1">
@@ -289,7 +288,6 @@ return (
     </div>
   </div>
 </div>
-```
 
 );
 }
@@ -333,7 +331,6 @@ if (loading) return (
 const displayedItems = useMemo(() => {
 let items: typeof menu = [];
 
-```
 if (searchQuery.trim()) {
   const q = searchQuery.toLowerCase();
   items = menu.filter(m =>
@@ -353,7 +350,6 @@ const regular = items
   .sort((a, b) => a.name.localeCompare(b.name, "it"));
 
 return [...regular, ...pinned];
-```
 
 }, [searchQuery, activeCategory, dietFilter]);
 
@@ -474,7 +470,6 @@ const modalQty  = cartItems
 .reduce((s, i) => s + i.quantity, 0);
 const totalQty  = directQty + modalQty;
 
-```
     return (
       <button
         key={item.id}
@@ -532,7 +527,6 @@ const totalQty  = directQty + modalQty;
     );
   })}
 </>
-```
 
 );
 
@@ -548,7 +542,6 @@ onClose={() => { setModalItem(null); setEditingCartId(null); }}
 />
 )}
 
-```
   {/* ════════════ LAYOUT DESKTOP (md+) ════════════ */}
   <div className="hidden md:flex gap-4 h-[calc(100vh-80px)]">
 
@@ -702,7 +695,6 @@ onClose={() => { setModalItem(null); setEditingCartId(null); }}
     )}
   </div>
 </>
-```
 
 );
 }
