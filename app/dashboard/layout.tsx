@@ -43,9 +43,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </nav>
 
       {/* ── CONTENUTO ── */}
-      <main className="flex-1 overflow-hidden p-3 md:p-5 pb-20 md:pb-5">
+      <main className="flex-1 overflow-auto md:overflow-hidden p-3 md:p-5 pb-24 md:pb-5">
         {children}
       </main>
+
 
       {/* ── MOBILE: bottom tab bar ── */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 z-40">
