@@ -111,6 +111,7 @@ export const EXTRA_INGREDIENTS: { name: string; price: number; type: "base" | "s
   { name: "Grana Padano",      price: 1, type: "base" },
   { name: "Pecorino",          price: 1, type: "base" },
   // Speciali +€2-3
+  { name: "Patatine fritte",       price: 2.5, type: "speciale" },
   { name: "Prosciutto cotto",      price: 2, type: "speciale" },
   { name: "Prosciutto San Daniele",price: 3, type: "speciale" },
   { name: "Speck",                 price: 2, type: "speciale" },
