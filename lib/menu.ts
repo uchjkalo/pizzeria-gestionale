@@ -75,6 +75,10 @@ export const menu: MenuItem[] = [
   // ========== SPECIALITÀ ==========
   { id: "s1", name: "Cotoletta e Patatine", price: 12.0, category: "specialita", tag: "normale",     ingredients: ["cotoletta", "patatine fritte"] },
   { id: "s2", name: "Il Frico",             price: 12.0, category: "specialita", tag: "vegetariano", ingredients: ["frico", "patate al forno", "insalata"] },
+
+  // ========== PIZZA PERSONALIZZATA (sempre ultima) ==========
+{ id: "custom_pizza", name: "Pizza Personalizzata", price: 6.0, category: "pizze", tag: "normale", ingredients: [], note: "🎨 PERSONALIZZATA" },
+
 ];
 
 export const categoryLabels: Record<MenuCategory, string> = {
