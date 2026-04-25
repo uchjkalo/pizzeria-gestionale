@@ -1,9 +1,10 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { subscribeToOrdersToday, payOrder, updateOrder, revertPayment, cancelOrder } from "@/lib/orders";
-import { Order } from "@/types";
+import { Order, OrderItem } from "@/types";
 
 const formatTime = (date: Date) =>
   date.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
@@ -16,16 +17,109 @@ const orderTypeLabel = (order: Order) => {
 
 const statusLabel = (s: string) => {
   switch (s) {
-    case "attesa":       return { label: "⏳ In attesa",   color: "bg-gray-600 text-gray-200" };
-    case "preparazione": return { label: "🔧 In prep.",    color: "bg-yellow-600 text-yellow-100" };
-    case "pronto":       return { label: "🔧 Rifinitura",  color: "bg-orange-600 text-orange-100" };
-    case "consegnato":   return { label: "✅ Consegnato",  color: "bg-blue-600 text-blue-100" };
-    default:             return { label: s,                color: "bg-gray-600 text-gray-200" };
+    case "attesa":       return { label: "⏳ In attesa",  color: "bg-gray-600 text-gray-200" };
+    case "preparazione": return { label: "🔧 In prep.",   color: "bg-yellow-600 text-yellow-100" };
+    case "pronto":       return { label: "🔧 Rifinitura", color: "bg-orange-600 text-orange-100" };
+    case "consegnato":   return { label: "✅ Consegnato", color: "bg-blue-600 text-blue-100" };
+    default:             return { label: s,               color: "bg-gray-600 text-gray-200" };
   }
 };
 
 // ─────────────────────────────────────────
-// QUICK ITEMS per aggiungere al conto
+// MAPPA CATEGORIA → ETICHETTA SCONTRINO
+// ─────────────────────────────────────────
+const CATEGORY_LABEL: Record<string, string> = {
+  pizze:      "Pizza",
+  panini:     "Panino",
+  burger:     "Burger",
+  fritti:     "Fritti",
+  bibite:     "Bibita",
+  specialita: "Specialità",
+};
+
+// ─────────────────────────────────────────
+// RIGA SCONTRINO
+// Espande gli item per quantità: qty=3 → 3 righe da "1× Pizza"
+// ─────────────────────────────────────────
+interface ReceiptLine {
+  key: string;
+  label: string;      // "Pizza", "Panino", "Delivery", "Portata"…
+  detail: string;     // "(Margherita)", "(Margherita — MAXI)", "(San Daniele)", ""
+  price: number;
+  dim?: string;       // "MAXI" / "BABY" — per evidenziare visivamente
+}
+
+function buildReceiptLines(order: Order, quickExtras: { label: string; price: number }[]): ReceiptLine[] {
+  const lines: ReceiptLine[] = [];
+
+  // ── Prodotti (espansi per quantità) ──
+  order.items.forEach((item: OrderItem) => {
+    const catLabel = CATEGORY_LABEL[item.category] ?? item.category;
+    // Costruisce il dettaglio nome: "(Margherita)" oppure "(½ Margherita + ½ Cosacca)"
+    let namePart = item.name;
+    if (item.isHalf && item.halfPizza1 && item.halfPizza2) {
+      namePart = `½ ${item.halfPizza1.name} + ½ ${item.halfPizza2.name}`;
+    }
+    const dimLabel = item.size !== "normale" ? item.size.toUpperCase() : "";
+
+    for (let i = 0; i < item.quantity; i++) {
+      lines.push({
+        key:    `${item.cartId}_${i}`,
+        label:  catLabel,
+        detail: namePart,
+        price:  item.effectivePrice,
+        dim:    dimLabel || undefined,
+      });
+    }
+  });
+
+  // ── Coperto (1 riga per persona) ──
+  if (order.type === "tavolo" && order.peopleCount) {
+    for (let i = 0; i < order.peopleCount; i++) {
+      lines.push({
+        key:    `coperto_${i}`,
+        label:  "Portata",
+        detail: "",
+        price:  1,
+      });
+    }
+  }
+
+  // ── Delivery ──
+  if (order.type === "delivery" && order.deliveryCost) {
+    lines.push({
+      key:    "delivery",
+      label:  "Delivery",
+      detail: order.deliveryAddress ?? "",
+      price:  order.deliveryCost,
+    });
+  }
+
+  // ── Extra ordine originale ──
+  (order.extras ?? []).forEach((e, i) => {
+    lines.push({
+      key:    `extra_${i}`,
+      label:  e.description,
+      detail: "",
+      price:  e.price,
+    });
+  });
+
+  // ── Quick extras aggiunti al momento del pagamento ──
+  quickExtras.forEach((e, i) => {
+    lines.push({
+      key:    `qextra_${i}`,
+      label:  e.label,
+      detail: "",
+      price:  e.price,
+    });
+  });
+
+  return lines;
+}
+
+// ─────────────────────────────────────────
+// QUICK ITEMS
 // ─────────────────────────────────────────
 const QUICK_ITEMS = [
   { label: "🍕 Pizza",      defaultPrice: 8.00  },
@@ -73,9 +167,9 @@ function PayModal({ order, onConfirm, onClose }: PayModalProps) {
   const removeQuickExtra = (idx: number) =>
     setQuickExtras(prev => prev.filter((_, i) => i !== idx));
 
-  const quickTotal = quickExtras.reduce((s, e) => s + e.price, 0);
-  const grandTotal = order.total + quickTotal;
-  const change     = cash ? Math.max(0, parseFloat(cash) - grandTotal) : null;
+  const receiptLines = buildReceiptLines(order, quickExtras);
+  const grandTotal   = receiptLines.reduce((s, l) => s + l.price, 0);
+  const change       = cash ? Math.max(0, parseFloat(cash) - grandTotal) : null;
 
   return (
     <div
@@ -89,81 +183,53 @@ function PayModal({ order, onConfirm, onClose }: PayModalProps) {
         <div className="p-4 border-b border-gray-700 shrink-0">
           <h2 className="text-white text-xl font-bold">💳 Incassa ordine</h2>
           <p className="text-gray-400 text-sm mt-0.5">{orderTypeLabel(order)}</p>
-          <p className="text-gray-500 text-xs mt-0.5">
-            Cibo: {statusLabel(order.status).label}
-          </p>
+          <p className="text-gray-500 text-xs mt-0.5">Cibo: {statusLabel(order.status).label}</p>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
 
-          {/* Dettaglio ordine */}
+          {/* ── RIEPILOGO SCONTRINO ── */}
           <div className="bg-gray-900 rounded-2xl p-4">
-            <p className="text-gray-400 text-xs font-semibold uppercase mb-2">Riepilogo ordine</p>
-            <div className="space-y-1 text-sm">
-              {order.items.map(i => (
-                <div key={i.cartId} className="flex justify-between">
-                  <span className={`flex-1 truncate ${i.id === "custom_pizza" ? "text-purple-300" : "text-gray-300"}`}>
-                    {i.quantity > 1 ? `×${i.quantity} ` : ""}
-                    {i.name}
-                    {i.isHalf && i.halfPizza1 && i.halfPizza2 && (
-                      <span className="text-purple-400 text-xs"> (½+½)</span>
+            <p className="text-gray-500 text-[10px] uppercase tracking-widest font-bold mb-3">
+              Riepilogo — {receiptLines.length} voci
+            </p>
+
+            <div className="space-y-1.5">
+              {receiptLines.map(line => (
+                <div key={line.key} className="flex items-baseline justify-between gap-2">
+                  {/* Sinistra: "1× Pizza  (Margherita)" */}
+                  <div className="flex items-baseline gap-1.5 min-w-0 flex-1">
+                    <span className="text-gray-500 text-xs font-mono shrink-0">1×</span>
+                    <span className="text-white text-sm font-semibold shrink-0">{line.label}</span>
+                    {line.dim && (
+                      <span className="text-[10px] font-black bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded shrink-0">
+                        {line.dim}
+                      </span>
                     )}
-                    {i.size !== "normale" && (
-                      <span className="text-yellow-500 text-xs"> [{i.size}]</span>
+                    {line.detail && (
+                      <span className="text-gray-500 text-xs truncate">({line.detail})</span>
                     )}
-                  </span>
-                  <span className="text-gray-400 ml-2 shrink-0">
-                    €{(i.effectivePrice * i.quantity).toFixed(2)}
+                  </div>
+                  {/* Destra: prezzo */}
+                  <span className="text-gray-300 text-sm font-mono shrink-0 tabular-nums">
+                    €{line.price.toFixed(2)}
                   </span>
                 </div>
               ))}
-              {order.extras?.map((e, i) => (
-                <div key={i} className="flex justify-between text-blue-300">
-                  <span className="flex-1 truncate">{e.description}</span>
-                  <span className="ml-2 shrink-0">€{e.price.toFixed(2)}</span>
-                </div>
-              ))}
-              {order.type === "tavolo" && order.peopleCount && (
-                <div className="flex justify-between text-gray-500">
-                  <span>Coperto ({order.peopleCount} pers.)</span>
-                  <span>€{order.peopleCount.toFixed(2)}</span>
-                </div>
-              )}
-              {order.type === "delivery" && order.deliveryCost && (
-                <div className="flex justify-between text-gray-500">
-                  <span>Delivery</span>
-                  <span>€{order.deliveryCost.toFixed(2)}</span>
-                </div>
-              )}
-              <div className="flex justify-between text-white font-bold pt-1 border-t border-gray-700 mt-1">
-                <span>Subtotale ordine</span>
-                <span>€{order.total.toFixed(2)}</span>
-              </div>
             </div>
 
-            {/* Quick extras aggiunti */}
-            {quickExtras.length > 0 && (
-              <div className="border-t border-gray-700 pt-2 mt-2 space-y-1">
-                {quickExtras.map((e, i) => (
-                  <div key={i} className="flex justify-between items-center text-sm">
-                    <span className="text-orange-300 flex-1 truncate">{e.label}</span>
-                    <div className="flex items-center gap-2 shrink-0 ml-2">
-                      <span className="text-orange-400 font-semibold">€{e.price.toFixed(2)}</span>
-                      <button
-                        onClick={() => removeQuickExtra(i)}
-                        className="text-gray-500 hover:text-red-400 text-lg leading-none w-5 h-5 flex items-center justify-center">
-                        ×
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            {receiptLines.length === 0 && (
+              <p className="text-gray-600 text-sm text-center py-2">Nessun prodotto</p>
             )}
 
-            {/* TOTALE FINALE */}
-            <div className="flex justify-between text-orange-400 font-black text-2xl mt-3 pt-2 border-t border-gray-700">
-              <span>TOTALE</span>
-              <span>€{grandTotal.toFixed(2)}</span>
+            {/* Separatore + totale */}
+            <div className="border-t border-dashed border-gray-700 mt-3 pt-3 flex justify-between items-baseline">
+              <span className="text-orange-400 font-black text-2xl tabular-nums">
+                €{grandTotal.toFixed(2)}
+              </span>
+              <span className="text-gray-600 text-xs">
+                TOTALE
+              </span>
             </div>
           </div>
 
@@ -210,7 +276,7 @@ function PayModal({ order, onConfirm, onClose }: PayModalProps) {
             </div>
           </div>
 
-          {/* Calcola resto (solo contanti) */}
+          {/* Calcola resto */}
           {method === "contanti" && (
             <div>
               <p className="text-gray-300 text-sm font-semibold mb-2">Calcola resto</p>
@@ -224,7 +290,7 @@ function PayModal({ order, onConfirm, onClose }: PayModalProps) {
                 {change !== null && (
                   <div className={`text-right shrink-0 ${change < 0 ? "text-red-400" : "text-green-400"}`}>
                     <p className="text-xs">Resto</p>
-                    <p className="font-black text-xl">€{change.toFixed(2)}</p>
+                    <p className="font-black text-xl tabular-nums">€{change.toFixed(2)}</p>
                   </div>
                 )}
               </div>
@@ -239,7 +305,7 @@ function PayModal({ order, onConfirm, onClose }: PayModalProps) {
             </div>
           )}
 
-          {/* Opzione Felice — mascherata */}
+          {/* Felice */}
           <button
             onClick={() => setFelice(f => !f)}
             className={`w-full py-2 rounded-xl text-sm border transition-all ${
@@ -268,15 +334,15 @@ function PayModal({ order, onConfirm, onClose }: PayModalProps) {
 }
 
 // ─────────────────────────────────────────
-// COMPONENTE PRINCIPALE CASSA
+// CASSA ZONE
 // ─────────────────────────────────────────
 export default function CassaZone() {
-  const { loading }                             = useAuth();
-  const [orders, setOrders]                     = useState<Order[]>([]);
-  const [payingOrder, setPayingOrder]           = useState<Order | null>(null);
-  const [tab, setTab]                           = useState<"daPagare" | "pagati">("daPagare");
-  const [confirmDelete, setConfirmDelete]       = useState<string | null>(null);
-  const [confirmRevert, setConfirmRevert]       = useState<string | null>(null);
+  const { loading }                       = useAuth();
+  const [orders, setOrders]               = useState<Order[]>([]);
+  const [payingOrder, setPayingOrder]     = useState<Order | null>(null);
+  const [tab, setTab]                     = useState<"daPagare" | "pagati">("daPagare");
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [confirmRevert, setConfirmRevert] = useState<string | null>(null);
 
   useEffect(() => {
     return subscribeToOrdersToday(setOrders);
@@ -288,8 +354,6 @@ export default function CassaZone() {
     quickExtras: { label: string; price: number }[]
   ) => {
     if (!payingOrder) return;
-
-    // Se ci sono quick extras, aggiorna il totale prima di pagare
     if (quickExtras.length > 0) {
       const extraTotal = quickExtras.reduce((s, e) => s + e.price, 0);
       const newExtras  = [
@@ -301,7 +365,6 @@ export default function CassaZone() {
         total:  payingOrder.total + extraTotal,
       });
     }
-
     await payOrder(payingOrder.id, { paymentMethod: method, felice });
     setPayingOrder(null);
   };
@@ -341,18 +404,18 @@ export default function CassaZone() {
 
       <div className="h-[calc(100vh-80px)] flex flex-col gap-4 overflow-hidden">
 
-        {/* Header con totali */}
+        {/* Header */}
         <div className="flex items-center justify-between shrink-0 flex-wrap gap-3">
           <h1 className="text-white text-2xl font-bold">💳 Cassa</h1>
           <div className="flex gap-3">
             <div className="bg-gray-800 border border-gray-700 rounded-xl px-4 py-2 text-right">
               <p className="text-gray-400 text-xs">Da incassare</p>
-              <p className="text-orange-400 text-2xl font-black">€{totaleDaPagare.toFixed(2)}</p>
+              <p className="text-orange-400 text-2xl font-black tabular-nums">€{totaleDaPagare.toFixed(2)}</p>
               <p className="text-gray-500 text-xs">{daPagare.length} ordini</p>
             </div>
             <div className="bg-gray-800 border border-gray-700 rounded-xl px-4 py-2 text-right">
               <p className="text-gray-400 text-xs">Incassato oggi</p>
-              <p className="text-green-400 text-2xl font-black">€{totaleIncassato.toFixed(2)}</p>
+              <p className="text-green-400 text-2xl font-black tabular-nums">€{totaleIncassato.toFixed(2)}</p>
               <p className="text-gray-500 text-xs">{pagati.length} ordini</p>
             </div>
           </div>
@@ -360,8 +423,7 @@ export default function CassaZone() {
 
         {/* Tab */}
         <div className="flex gap-2 shrink-0">
-          <button
-            onClick={() => setTab("daPagare")}
+          <button onClick={() => setTab("daPagare")}
             className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-colors border ${
               tab === "daPagare"
                 ? "border-orange-500 bg-orange-500/20 text-orange-300"
@@ -369,8 +431,7 @@ export default function CassaZone() {
             }`}>
             💰 Da pagare ({daPagare.length})
           </button>
-          <button
-            onClick={() => setTab("pagati")}
+          <button onClick={() => setTab("pagati")}
             className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-colors border ${
               tab === "pagati"
                 ? "border-green-500 bg-green-500/20 text-green-300"
@@ -391,14 +452,17 @@ export default function CassaZone() {
         ) : (
           <div className="flex-1 overflow-y-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 content-start pr-1">
             {displayed.map(order => {
-              const st         = statusLabel(order.status);
-              const isDeleting = confirmDelete === order.id;
+              const st          = statusLabel(order.status);
+              const isDeleting  = confirmDelete === order.id;
               const isReverting = confirmRevert === order.id;
+
+              // Receipt lines per la card (senza quick extras perché non ancora aggiunti)
+              const cardLines = buildReceiptLines(order, []);
 
               return (
                 <div key={order.id}
                   className={`bg-gray-800 rounded-2xl border p-4 flex flex-col gap-3 ${
-                    order.isPaid      ? "border-green-700/50" :
+                    order.isPaid          ? "border-green-700/50" :
                     order.status === "consegnato" ? "border-blue-700" :
                     order.status === "pronto"     ? "border-orange-600" :
                                                     "border-gray-700"
@@ -422,46 +486,27 @@ export default function CassaZone() {
                     </div>
                   </div>
 
-                  {/* Prodotti */}
-                  <div className="space-y-1">
-                    {order.items.map(item => (
-                      <div key={item.cartId} className="flex justify-between text-sm">
-                        <span className={`flex-1 truncate ${item.id === "custom_pizza" ? "text-purple-300" : "text-gray-300"}`}>
-                          {item.quantity > 1 && <span className="text-orange-400">×{item.quantity} </span>}
-                          {item.name}
-                          {item.isHalf && item.halfPizza1 && item.halfPizza2 && (
-                            <span className="text-purple-400 text-xs"> (½+½)</span>
+                  {/* ── RIEPILOGO RECEIPT ── */}
+                  <div className="bg-gray-900/60 rounded-xl px-3 py-2.5 space-y-1">
+                    {cardLines.map(line => (
+                      <div key={line.key} className="flex items-baseline justify-between gap-2">
+                        <div className="flex items-baseline gap-1.5 min-w-0 flex-1">
+                          <span className="text-gray-600 text-[10px] font-mono shrink-0">1×</span>
+                          <span className="text-gray-200 text-xs font-semibold shrink-0">{line.label}</span>
+                          {line.dim && (
+                            <span className="text-[9px] font-black bg-amber-500/20 text-amber-400 px-1 rounded shrink-0">
+                              {line.dim}
+                            </span>
                           )}
-                          {item.size !== "normale" && (
-                            <span className="text-yellow-500 text-xs"> [{item.size}]</span>
+                          {line.detail && (
+                            <span className="text-gray-500 text-[10px] truncate">({line.detail})</span>
                           )}
-                          {item.manualAdditions?.length > 0 && (
-                            <span className="text-orange-400 text-xs"> +{item.manualAdditions.map(m => m.name).join(", ")}</span>
-                          )}
-                        </span>
-                        <span className="text-gray-400 ml-2 shrink-0">
-                          €{(item.effectivePrice * item.quantity).toFixed(2)}
+                        </div>
+                        <span className="text-gray-400 text-xs font-mono shrink-0 tabular-nums">
+                          €{line.price.toFixed(2)}
                         </span>
                       </div>
                     ))}
-                    {order.extras?.map((e, i) => (
-                      <div key={i} className="flex justify-between text-sm">
-                        <span className="text-blue-300 flex-1 truncate">{e.description}</span>
-                        <span className="text-blue-300 ml-2 shrink-0">€{e.price.toFixed(2)}</span>
-                      </div>
-                    ))}
-                    {order.type === "tavolo" && order.peopleCount && (
-                      <div className="flex justify-between text-sm text-gray-500">
-                        <span>Coperto</span>
-                        <span>€{order.peopleCount.toFixed(2)}</span>
-                      </div>
-                    )}
-                    {order.type === "delivery" && order.deliveryCost && (
-                      <div className="flex justify-between text-sm text-gray-500">
-                        <span>Delivery</span>
-                        <span>€{order.deliveryCost.toFixed(2)}</span>
-                      </div>
-                    )}
                   </div>
 
                   {/* Note */}
@@ -473,7 +518,7 @@ export default function CassaZone() {
 
                   {/* Totale + azione principale */}
                   <div className="flex items-center justify-between pt-2 border-t border-gray-700 mt-auto">
-                    <span className="text-orange-400 text-2xl font-black">
+                    <span className="text-orange-400 text-2xl font-black tabular-nums">
                       €{order.total.toFixed(2)}
                     </span>
                     {order.isPaid ? (
@@ -494,25 +539,20 @@ export default function CassaZone() {
                     )}
                   </div>
 
-                  {/* ── Annulla pagamento (solo ordini pagati) ── */}
+                  {/* Annulla pagamento */}
                   {order.isPaid && (
                     <div>
                       {isReverting ? (
                         <div className="flex gap-2">
-                          <button
-                            onClick={() => handleRevertPayment(order.id)}
+                          <button onClick={() => handleRevertPayment(order.id)}
                             className="flex-1 bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-bold py-2 rounded-xl transition-colors">
                             ↩ Sì, annulla pagamento
                           </button>
-                          <button
-                            onClick={() => setConfirmRevert(null)}
-                            className="flex-1 bg-gray-700 text-gray-300 text-xs py-2 rounded-xl transition-colors">
-                            No
-                          </button>
+                          <button onClick={() => setConfirmRevert(null)}
+                            className="flex-1 bg-gray-700 text-gray-300 text-xs py-2 rounded-xl">No</button>
                         </div>
                       ) : (
-                        <button
-                          onClick={() => setConfirmRevert(order.id)}
+                        <button onClick={() => setConfirmRevert(order.id)}
                           className="w-full bg-gray-700/50 hover:bg-yellow-900/30 text-gray-400 hover:text-yellow-300 text-xs py-2 rounded-xl transition-colors border border-gray-700 hover:border-yellow-700/50">
                           ↩ Annulla pagamento
                         </button>
@@ -520,23 +560,18 @@ export default function CassaZone() {
                     </div>
                   )}
 
-                  {/* ── Elimina ordine (tutti) ── */}
+                  {/* Elimina ordine */}
                   {isDeleting ? (
                     <div className="flex gap-2">
-                      <button
-                        onClick={() => handleCancelOrder(order.id)}
+                      <button onClick={() => handleCancelOrder(order.id)}
                         className="flex-1 bg-red-600 hover:bg-red-500 text-white text-xs font-bold py-2 rounded-xl transition-colors">
                         🗑 Sì, elimina
                       </button>
-                      <button
-                        onClick={() => setConfirmDelete(null)}
-                        className="flex-1 bg-gray-700 text-gray-300 text-xs py-2 rounded-xl transition-colors">
-                        No
-                      </button>
+                      <button onClick={() => setConfirmDelete(null)}
+                        className="flex-1 bg-gray-700 text-gray-300 text-xs py-2 rounded-xl">No</button>
                     </div>
                   ) : (
-                    <button
-                      onClick={() => setConfirmDelete(order.id)}
+                    <button onClick={() => setConfirmDelete(order.id)}
                       className="w-full text-gray-600 hover:text-red-400 text-xs py-1 transition-colors hover:bg-red-900/10 rounded-lg">
                       🗑 Elimina ordine
                     </button>
