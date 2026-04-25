@@ -8,8 +8,21 @@ import { Order } from "@/types";
 
 const ordersRef = collection(db, "orders");
 
-const stripUndefined = (obj: Record<string, unknown>): Record<string, unknown> =>
-  Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined));
+// ── Deep strip: rimuove TUTTI i valori undefined ricorsivamente ──
+// Firestore rifiuta qualsiasi campo undefined anche in oggetti annidati (es. dentro items[])
+const deepStrip = (val: unknown): unknown => {
+  if (Array.isArray(val)) {
+    return val.map(deepStrip);
+  }
+  if (val !== null && typeof val === "object") {
+    return Object.fromEntries(
+      Object.entries(val as Record<string, unknown>)
+        .filter(([, v]) => v !== undefined)
+        .map(([k, v]) => [k, deepStrip(v)])
+    );
+  }
+  return val;
+};
 
 const mapDoc = (d: any): Order => ({
   id: d.id,
@@ -21,7 +34,7 @@ const mapDoc = (d: any): Order => ({
 
 // ── Crea ordine ──
 export const createOrder = async (order: Omit<Order, "id" | "createdAt" | "updatedAt">) => {
-  const clean = stripUndefined(order as unknown as Record<string, unknown>);
+  const clean = deepStrip(order) as Record<string, unknown>;
   const ref = await addDoc(ordersRef, {
     ...clean,
     createdAt: serverTimestamp(),
@@ -40,7 +53,7 @@ export const updateOrder = async (orderId: string, data: Partial<Order>) => {
   await updateDoc(doc(db, "orders", orderId), { ...data, updatedAt: serverTimestamp() });
 };
 
-// ── Paga ordine (indipendente dallo status cibo) ──
+// ── Paga ordine ──
 export const payOrder = async (
   orderId: string,
   data: { paymentMethod: "contanti" | "carta"; felice: boolean }
@@ -54,26 +67,24 @@ export const payOrder = async (
   });
 };
 
-// ── Ordini attivi (non ancora consegnati) — per cucina e fritture ──
+// ── Ordini attivi (non ancora consegnati) ──
 export const subscribeToActiveOrders = (callback: (orders: Order[]) => void) => {
   const q = query(ordersRef, orderBy("createdAt", "asc"));
   return onSnapshot(q, snap => {
     callback(
-      snap.docs.map(mapDoc)
-        .filter(o => o.status !== "consegnato" && !o.isCancelled)
+      snap.docs.map(mapDoc).filter(o => o.status !== "consegnato" && !o.isCancelled)
     );
   });
 };
 
-// ── Tutti gli ordini di oggi — per preparazione e cassa ──
+// ── Tutti gli ordini di oggi ──
 export const subscribeToOrdersToday = (callback: (orders: Order[]) => void) => {
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
   const q = query(ordersRef, orderBy("createdAt", "asc"));
   return onSnapshot(q, snap => {
     callback(
-      snap.docs.map(mapDoc)
-        .filter(o => o.createdAt >= startOfDay && !o.isCancelled)
+      snap.docs.map(mapDoc).filter(o => o.createdAt >= startOfDay && !o.isCancelled)
     );
   });
 };
@@ -85,32 +96,29 @@ export const subscribeToPaidToday = (callback: (orders: Order[]) => void) => {
   const q = query(ordersRef, where("isPaid", "==", true), orderBy("paidAt", "desc"));
   return onSnapshot(q, snap => {
     callback(
-  snap.docs.map(mapDoc).filter(o => o.paidAt && o.paidAt >= startOfDay && !o.isCancelled)
+      snap.docs.map(mapDoc).filter(o => o.paidAt && o.paidAt >= startOfDay && !o.isCancelled)
     );
   });
 };
 
-// ── Azzera statistiche giornaliere (reset completo) ──
+// ── Azzera statistiche giornaliere ──
 export const resetPaidTodayStats = async (): Promise<number> => {
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
-
   const q = query(ordersRef, where("isPaid", "==", true), orderBy("paidAt", "desc"));
   const snap = await getDocs(q);
-  const docsToDelete = snap.docs.filter(d => {
+  const toDelete = snap.docs.filter(d => {
     const paidAt = d.data().paidAt as Timestamp | undefined;
     return paidAt && paidAt.toDate() >= startOfDay;
   });
-
-  if (docsToDelete.length === 0) return 0;
-
+  if (toDelete.length === 0) return 0;
   const batch = writeBatch(db);
-  docsToDelete.forEach(d => batch.delete(d.ref));
+  toDelete.forEach(d => batch.delete(d.ref));
   await batch.commit();
-  return docsToDelete.length;
+  return toDelete.length;
 };
 
-// ── Annulla ordine (escluso da statistiche) ──
+// ── Annulla ordine ──
 export const cancelOrder = async (orderId: string) => {
   await updateDoc(doc(db, "orders", orderId), {
     isCancelled: true,
@@ -119,7 +127,7 @@ export const cancelOrder = async (orderId: string) => {
   });
 };
 
-// ── Annulla pagamento (torna in "da pagare") ──
+// ── Annulla pagamento ──
 export const revertPayment = async (orderId: string) => {
   await updateDoc(doc(db, "orders", orderId), {
     isPaid: false,
