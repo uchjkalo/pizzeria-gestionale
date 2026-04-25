@@ -238,6 +238,7 @@ interface OrderPanelProps {
   newExtraPrice: string;
   saving: boolean;
   success: boolean;
+  submitError: string | null;
   onOrderTypeChange: (t: OrderType) => void;
   onTableNumberChange: (n: number) => void;
   onPeopleCountChange: (n: number) => void;
@@ -492,6 +493,12 @@ function OrderPanel(p: OrderPanelProps) {
             <p className="text-green-400 text-sm font-bold">✅ Ordine inviato!</p>
           </div>
         )}
+        {p.submitError && (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2">
+            <p className="text-red-400 text-xs font-bold">❌ Errore invio ordine</p>
+            <p className="text-red-300/70 text-[10px] mt-0.5 break-all">{p.submitError}</p>
+          </div>
+        )}
         <button onClick={p.onSubmit} disabled={p.cartItems.length === 0 || p.saving}
           className={`w-full font-bold py-4 rounded-2xl text-sm transition-all duration-200 ${
             p.cartItems.length > 0 && !p.saving
@@ -543,6 +550,7 @@ export default function OrdiniPage() {
   const [searchQuery, setSearchQuery]         = useState("");
   const [saving, setSaving]                   = useState(false);
   const [success, setSuccess]                 = useState(false);
+  const [submitError, setSubmitError]           = useState<string | null>(null);
   const [cartOpen, setCartOpen]               = useState(false);
 
   // BUG FIX: useMemo MUST be before if(loading) return
@@ -630,6 +638,7 @@ export default function OrdiniPage() {
   const submitOrder = async () => {
     if (cartItems.length === 0) return;
     setSaving(true);
+    setSubmitError(null);
     try {
       await createOrder({
         type: orderType, status: "attesa", items: cartItems, extras,
@@ -648,13 +657,19 @@ export default function OrdiniPage() {
       setPeopleCount(2); setTableNumber(1); setIsUrgent(false); setOrderNotes("");
       setSuccess(true); setCartOpen(false);
       setTimeout(() => setSuccess(false), 3000);
-    } finally { setSaving(false); }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Errore sconosciuto";
+      console.error("[submitOrder]", err);
+      setSubmitError(msg);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const panelProps: OrderPanelProps = {
     cartItems, extras, orderType, tableNumber, peopleCount, customerName,
     deliveryAddress, deliveryCost, desiredTime, isUrgent, orderNotes,
-    newExtraDesc, newExtraPrice, saving, success,
+    newExtraDesc, newExtraPrice, saving, success, submitError,
     onOrderTypeChange:       setOrderType,
     onTableNumberChange:     setTableNumber,
     onPeopleCountChange:     setPeopleCount,
