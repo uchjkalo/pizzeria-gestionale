@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { menu, MenuItem, MenuCategory, categoryLabels, tagColors, DietTag } from "@/lib/menu";
+import { menu, MenuItem, MenuCategory, categoryLabels, DietTag } from "@/lib/menu";
 import { createOrder } from "@/lib/orders";
 import { OrderItem, OrderType, ExtraItem } from "@/types";
 import ItemCustomizeModal from "@/components/zones/ItemCustomizeModal";
@@ -21,18 +21,12 @@ const calcTotals = (
   const extrasTotal   = extras.reduce((s, e) => s + e.price, 0);
   const copertoTotal  = type === "tavolo" ? peopleCount : 0;
   const deliveryTotal = type === "delivery" ? deliveryCost : 0;
-  return {
-    itemsTotal,
-    extrasTotal,
-    copertoTotal,
-    deliveryTotal,
-    grand: itemsTotal + extrasTotal + copertoTotal + deliveryTotal,
-  };
+  return { itemsTotal, extrasTotal, copertoTotal, deliveryTotal, grand: itemsTotal + extrasTotal + copertoTotal + deliveryTotal };
 };
 
-// ─────────────────────────────────────────────────────────
-// PANNELLO ORDINE (riutilizzato su desktop e mobile sheet)
-// ─────────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────
+   ORDER PANEL
+───────────────────────────────────────────────────────────── */
 interface OrderPanelProps {
   cartItems: OrderItem[];
   extras: ExtraItem[];
@@ -70,218 +64,210 @@ interface OrderPanelProps {
   menuById: (id: string) => MenuItem | undefined;
 }
 
+const inputCls = "w-full bg-gray-900 text-white rounded-xl px-3 py-2.5 text-sm outline-none ring-1 ring-gray-700/80 focus:ring-orange-500/60 transition-all placeholder:text-gray-600 mt-1";
+const labelCls = "text-gray-500 text-[10px] uppercase tracking-widest font-bold";
+
 function OrderPanel(p: OrderPanelProps) {
-  const totals   = calcTotals(p.cartItems, p.extras, p.orderType, p.peopleCount, p.deliveryCost);
+  const totals     = calcTotals(p.cartItems, p.extras, p.orderType, p.peopleCount, p.deliveryCost);
   const totalItems = p.cartItems.reduce((s, i) => s + i.quantity, 0);
 
   return (
     <div className="flex flex-col h-full">
-      {/* Tipo ordine */}
-      <div className="p-3 border-b border-gray-700 shrink-0 space-y-2">
-        <div className="grid grid-cols-3 gap-1">
-          {(["tavolo", "asporto", "delivery"] as OrderType[]).map(t => (
-            <button key={t} onClick={() => p.onOrderTypeChange(t)}
-              className={`py-2.5 rounded-xl text-xs font-bold transition-colors ${
-                p.orderType === t ? "bg-orange-500 text-white" : "bg-gray-700 text-gray-300"
-              }`}>
-              {t === "tavolo" ? "🪑 Tavolo" : t === "asporto" ? "🥡 Asporto" : "🚴 Delivery"}
-            </button>
-          ))}
+
+      {/* ── Type selector ── */}
+      <div className="p-3 border-b border-gray-700/40 shrink-0 space-y-2.5">
+        <div className="grid grid-cols-3 gap-1 bg-gray-900/60 p-1 rounded-2xl">
+          {(["tavolo", "asporto", "delivery"] as OrderType[]).map(t => {
+            const active = p.orderType === t;
+            const cfg = { tavolo: { e: "🪑", l: "Tavolo" }, asporto: { e: "🥡", l: "Asporto" }, delivery: { e: "🚴", l: "Delivery" } }[t];
+            return (
+              <button key={t} onClick={() => p.onOrderTypeChange(t)}
+                className={`py-2 rounded-xl text-[11px] font-bold transition-all duration-200 flex flex-col items-center gap-0.5 ${
+                  active ? "bg-orange-500 text-white shadow-lg shadow-orange-500/25" : "text-gray-500 hover:text-gray-300"
+                }`}>
+                <span className="text-base">{cfg.e}</span>
+                {cfg.l}
+              </button>
+            );
+          })}
         </div>
 
         {p.orderType === "tavolo" && (
           <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-gray-400 text-xs">N° Tavolo</label>
-              <input type="number" min={1} value={p.tableNumber}
-                onChange={e => p.onTableNumberChange(+e.target.value)}
-                className="w-full bg-gray-700 text-white rounded-xl px-3 py-2.5 text-sm mt-0.5 outline-none focus:ring-2 focus:ring-orange-500" />
-            </div>
-            <div>
-              <label className="text-gray-400 text-xs">Persone (+€1)</label>
-              <input type="number" min={1} value={p.peopleCount}
-                onChange={e => p.onPeopleCountChange(+e.target.value)}
-                className="w-full bg-gray-700 text-white rounded-xl px-3 py-2.5 text-sm mt-0.5 outline-none focus:ring-2 focus:ring-orange-500" />
-            </div>
+            <div><label className={labelCls}>Tavolo</label><input type="number" min={1} value={p.tableNumber} onChange={e => p.onTableNumberChange(+e.target.value)} className={inputCls} /></div>
+            <div><label className={labelCls}>Persone (+€1)</label><input type="number" min={1} value={p.peopleCount} onChange={e => p.onPeopleCountChange(+e.target.value)} className={inputCls} /></div>
           </div>
         )}
 
         {(p.orderType === "asporto" || p.orderType === "delivery") && (
           <div>
-            <label className="text-gray-400 text-xs">Nome cliente</label>
-            <input type="text" value={p.customerName}
-              onChange={e => p.onCustomerNameChange(e.target.value)}
-              placeholder="Es. Mario Rossi"
-              className="w-full bg-gray-700 text-white rounded-xl px-3 py-2.5 text-sm mt-0.5 outline-none focus:ring-2 focus:ring-orange-500" />
+            <label className={labelCls}>Nome cliente</label>
+            <input type="text" value={p.customerName} onChange={e => p.onCustomerNameChange(e.target.value)} placeholder="Mario Rossi" className={inputCls} />
           </div>
         )}
 
         {p.orderType === "delivery" && (
           <div className="space-y-2">
-            <div>
-              <label className="text-gray-400 text-xs">Indirizzo</label>
-              <input type="text" value={p.deliveryAddress}
-                onChange={e => p.onDeliveryAddressChange(e.target.value)}
-                placeholder="Via Roma 1, Barcis"
-                className="w-full bg-gray-700 text-white rounded-xl px-3 py-2.5 text-sm mt-0.5 outline-none focus:ring-2 focus:ring-orange-500" />
-            </div>
-            <div>
-              <label className="text-gray-400 text-xs">Costo delivery (€)</label>
-              <input type="number" min={0} step={0.5} value={p.deliveryCost}
-                onChange={e => p.onDeliveryCostChange(+e.target.value)}
-                className="w-full bg-gray-700 text-white rounded-xl px-3 py-2.5 text-sm mt-0.5 outline-none focus:ring-2 focus:ring-orange-500" />
-            </div>
+            <div><label className={labelCls}>Indirizzo</label><input type="text" value={p.deliveryAddress} onChange={e => p.onDeliveryAddressChange(e.target.value)} placeholder="Via Roma 1" className={inputCls} /></div>
+            <div><label className={labelCls}>Costo delivery €</label><input type="number" min={0} step={0.5} value={p.deliveryCost} onChange={e => p.onDeliveryCostChange(+e.target.value)} className={inputCls} /></div>
           </div>
         )}
 
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="text-gray-400 text-xs">Orario desiderato</label>
-            <input type="time" value={p.desiredTime}
-              onChange={e => p.onDesiredTimeChange(e.target.value)}
-              className="w-full bg-gray-700 text-white rounded-xl px-3 py-2.5 text-sm mt-0.5 outline-none focus:ring-2 focus:ring-orange-500" />
+            <label className={labelCls}>Orario</label>
+            <input type="time" value={p.desiredTime} onChange={e => p.onDesiredTimeChange(e.target.value)} className={inputCls} />
           </div>
           <div className="flex flex-col justify-end">
             <button onClick={() => p.onIsUrgentChange(!p.isUrgent)}
-              className={`py-2.5 rounded-xl text-sm font-bold border-2 transition-all ${
+              className={`py-2.5 rounded-xl text-xs font-bold border-2 transition-all duration-200 ${
                 p.isUrgent
-                  ? "border-red-500 bg-red-500/20 text-red-300"
-                  : "border-gray-600 bg-gray-700 text-gray-400"
+                  ? "border-red-500 bg-red-500/10 text-red-400 shadow-[0_0_16px_rgba(239,68,68,0.2)]"
+                  : "border-gray-700 text-gray-600 hover:border-gray-500 hover:text-gray-400"
               }`}>
-              🔴 Urgente
+              🔴 URGENTE
             </button>
           </div>
         </div>
       </div>
 
-      {/* Carrello */}
+      {/* ── Cart items ── */}
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
-        {p.cartItems.length === 0 && (
-          <div className="text-center text-gray-500 mt-8">
-            <p className="text-4xl mb-2">🛒</p>
-            <p className="text-sm">Nessun prodotto</p>
+        {p.cartItems.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-gray-700 select-none">
+            <div className="text-5xl mb-3 grayscale opacity-40">🛒</div>
+            <p className="text-sm font-medium text-gray-600">Carrello vuoto</p>
+            <p className="text-xs mt-1 text-gray-700">Aggiungi prodotti dal menu</p>
           </div>
-        )}
-        {p.cartItems.map(ci => {
-          const menuItem = p.menuById(ci.id);
-          const isDirect = ci.cartId.includes("_direct");
-          const isCustom = ci.id === "custom_pizza";
-          return (
-            <div key={ci.cartId}
-              className={`rounded-2xl p-3 border ${
-                isCustom ? "bg-purple-900/20 border-purple-700/50" : "bg-gray-700/60 border-gray-600"
-              }`}>
-              <div className="flex justify-between items-start gap-2">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <p className={`text-sm font-bold ${isCustom ? "text-purple-300" : "text-white"}`}>
-                      {ci.name}
+        ) : (
+          p.cartItems.map(ci => {
+            const menuItem = p.menuById(ci.id);
+            const isDirect = ci.cartId.includes("_direct");
+            const isCustom = ci.id === "custom_pizza";
+            return (
+              <div key={ci.cartId}
+                className={`rounded-2xl p-2.5 border transition-all ${
+                  isCustom ? "bg-purple-950/40 border-purple-700/30" : "bg-gray-900/60 border-gray-700/30"
+                }`}>
+                <div className="flex justify-between items-start gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <p className={`text-sm font-bold leading-tight ${isCustom ? "text-purple-300" : "text-white"}`}>{ci.name}</p>
+                      {ci.size !== "normale" && (
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-black ${
+                          ci.size === "maxi" ? "bg-amber-500/20 text-amber-400" : "bg-blue-500/20 text-blue-400"
+                        }`}>{ci.size.toUpperCase()}</span>
+                      )}
+                    </div>
+                    {ci.isHalf && ci.halfPizza1 && ci.halfPizza2 && (
+                      <p className="text-purple-400 text-[10px] mt-0.5">½ {ci.halfPizza1.name} + ½ {ci.halfPizza2.name}</p>
+                    )}
+                    {ci.removedIngredients.length > 0 && (
+                      <p className="text-red-400 text-[10px]">✗ {ci.removedIngredients.join(", ")}</p>
+                    )}
+                    {ci.addedIngredients.length > 0 && (
+                      <p className="text-green-400 text-[10px]">+ {ci.addedIngredients.map(i => i.name).join(", ")}</p>
+                    )}
+                    {ci.manualAdditions?.length > 0 && (
+                      <p className="text-orange-300 text-[10px]">✏️ {ci.manualAdditions.map(m => m.name).join(", ")}</p>
+                    )}
+                    {ci.notes && <p className="text-gray-600 text-[10px] italic">"{ci.notes}"</p>}
+                    <p className="text-orange-400 text-[10px] font-semibold mt-0.5">
+                      €{ci.effectivePrice.toFixed(2)} × {ci.quantity} = <span className="font-black">€{(ci.effectivePrice * ci.quantity).toFixed(2)}</span>
                     </p>
-                    {isCustom && (
-                      <span className="text-xs bg-purple-600/30 text-purple-400 px-1.5 py-0.5 rounded font-bold">🎨</span>
-                    )}
-                    {ci.size !== "normale" && (
-                      <span className={`text-xs px-1.5 py-0.5 rounded font-bold ${
-                        ci.size === "maxi" ? "bg-yellow-500/20 text-yellow-400" : "bg-blue-500/20 text-blue-400"
-                      }`}>{ci.size.toUpperCase()}</span>
-                    )}
                   </div>
-                  {ci.isHalf && ci.halfPizza1 && ci.halfPizza2 && (
-                    <p className="text-purple-400 text-xs mt-0.5">½ {ci.halfPizza1.name} + ½ {ci.halfPizza2.name}</p>
-                  )}
-                  {ci.removedIngredients.length > 0 && (
-                    <p className="text-red-400 text-xs mt-0.5">✗ {ci.removedIngredients.join(", ")}</p>
-                  )}
-                  {ci.addedIngredients.length > 0 && (
-                    <p className="text-green-400 text-xs">+ {ci.addedIngredients.map(i => i.name).join(", ")}</p>
-                  )}
-                  {ci.manualAdditions?.length > 0 && (
-                    <p className="text-orange-300 text-xs">✏️ {ci.manualAdditions.map(m => m.name).join(", ")}</p>
-                  )}
-                  {ci.notes && <p className="text-gray-400 text-xs italic">"{ci.notes}"</p>}
-                  <p className="text-orange-400 text-xs font-semibold mt-0.5">
-                    €{ci.effectivePrice.toFixed(2)} × {ci.quantity} = €{(ci.effectivePrice * ci.quantity).toFixed(2)}
-                  </p>
-                </div>
-                <div className="flex gap-1.5 shrink-0">
-                  {!isDirect && menuItem && (
-                    <button onClick={() => p.onEditCartItem(menuItem, ci.cartId)}
-                      className="w-9 h-9 bg-gray-600 hover:bg-blue-600 text-white rounded-xl text-sm flex items-center justify-center transition-colors">
-                      ✏️
+                  <div className="flex gap-1 shrink-0">
+                    {!isDirect && menuItem && (
+                      <button onClick={() => p.onEditCartItem(menuItem, ci.cartId)}
+                        className="w-8 h-8 bg-gray-800 hover:bg-blue-600/30 hover:text-blue-400 text-gray-500 rounded-xl text-xs flex items-center justify-center transition-all">
+                        ✏️
+                      </button>
+                    )}
+                    <button onClick={() => p.onRemoveCartItem(ci.cartId)}
+                      className="w-8 h-8 bg-gray-800 hover:bg-red-600/30 hover:text-red-400 text-gray-500 rounded-xl font-bold text-base flex items-center justify-center transition-all">
+                      ×
                     </button>
-                  )}
-                  <button onClick={() => p.onRemoveCartItem(ci.cartId)}
-                    className="w-9 h-9 bg-gray-600 hover:bg-red-600 text-white rounded-xl font-bold text-lg flex items-center justify-center transition-colors">
-                    ×
-                  </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
 
-      {/* Extra manuali */}
-      <div className="px-3 pb-2 shrink-0 border-t border-gray-700 pt-3">
-        <p className="text-gray-400 text-xs mb-2 font-semibold">➕ Extra manuale ordine</p>
+      {/* ── Extra manuale ── */}
+      <div className="px-3 pb-2 shrink-0 border-t border-gray-700/40 pt-2.5">
+        <p className={`${labelCls} mb-2`}>Extra ordine</p>
         <div className="flex gap-1.5">
           <input value={p.newExtraDesc} onChange={e => p.onNewExtraDescChange(e.target.value)}
             onKeyDown={e => e.key === "Enter" && p.onAddExtra()}
             placeholder="Descrizione"
-            className="flex-1 bg-gray-700 text-white rounded-xl px-3 py-2.5 text-sm outline-none border border-gray-600" />
+            className="flex-1 bg-gray-900 text-white rounded-xl px-3 py-2 text-sm outline-none ring-1 ring-gray-700/60 focus:ring-orange-500/50 placeholder:text-gray-700" />
           <input value={p.newExtraPrice} onChange={e => p.onNewExtraPriceChange(e.target.value)}
             onKeyDown={e => e.key === "Enter" && p.onAddExtra()}
             placeholder="€" type="number" min={0} step={0.5}
-            className="w-16 bg-gray-700 text-white rounded-xl px-2 py-2.5 text-sm outline-none border border-gray-600" />
+            className="w-14 bg-gray-900 text-white rounded-xl px-2 py-2 text-sm outline-none ring-1 ring-gray-700/60 focus:ring-orange-500/50" />
           <button onClick={p.onAddExtra}
-            className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl px-3 font-bold text-lg transition-colors">
-            +
-          </button>
+            className="bg-orange-500 hover:bg-orange-400 text-white rounded-xl px-3 font-bold text-lg transition-colors">+</button>
         </div>
         {p.extras.map((e, i) => (
-          <div key={i} className="flex justify-between items-center text-xs text-gray-300 mt-1.5">
-            <span>{e.description}</span>
+          <div key={i} className="flex justify-between items-center mt-1.5 bg-gray-900/60 rounded-lg px-2.5 py-1.5">
+            <span className="text-gray-400 text-xs">{e.description}</span>
             <div className="flex items-center gap-2">
-              <span className="text-orange-400">€{e.price.toFixed(2)}</span>
-              <button onClick={() => p.onRemoveExtra(i)} className="text-gray-500 hover:text-red-400 text-base">×</button>
+              <span className="text-orange-400 text-xs font-bold">€{e.price.toFixed(2)}</span>
+              <button onClick={() => p.onRemoveExtra(i)} className="text-gray-700 hover:text-red-400 text-base leading-none transition-colors">×</button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Note ordine */}
+      {/* ── Note ── */}
       <div className="px-3 pb-2 shrink-0">
         <textarea value={p.orderNotes} onChange={e => p.onOrderNotesChange(e.target.value)}
-          placeholder="📋 Note cucina (ordine intero)..."
+          placeholder="📋 Note per la cucina..."
           rows={2}
-          className="w-full bg-gray-700 text-white rounded-xl px-3 py-2 text-sm outline-none border border-gray-600 resize-none" />
+          className="w-full bg-gray-900 text-white rounded-xl px-3 py-2 text-sm outline-none ring-1 ring-gray-700/60 focus:ring-orange-500/50 resize-none placeholder:text-gray-700" />
       </div>
 
-      {/* Totale */}
-      <div className="px-3 pb-2 shrink-0 border-t border-gray-700 pt-2 space-y-1 text-sm">
-        {totals.copertoTotal  > 0 && <div className="flex justify-between text-gray-400"><span>Coperto ({p.peopleCount} pers.)</span><span>€{totals.copertoTotal.toFixed(2)}</span></div>}
-        {totals.deliveryTotal > 0 && <div className="flex justify-between text-gray-400"><span>Delivery</span><span>€{totals.deliveryTotal.toFixed(2)}</span></div>}
-        {totals.extrasTotal   > 0 && <div className="flex justify-between text-gray-400"><span>Extra</span><span>€{totals.extrasTotal.toFixed(2)}</span></div>}
-        <div className="flex justify-between text-white font-bold text-lg pt-1 border-t border-gray-600">
-          <span>TOTALE</span>
-          <span className="text-orange-400">€{totals.grand.toFixed(2)}</span>
+      {/* ── Totale ── */}
+      <div className="px-3 pb-2 shrink-0 border-t border-gray-700/40 pt-2 space-y-1">
+        {totals.copertoTotal > 0 && (
+          <div className="flex justify-between text-xs text-gray-600"><span>Coperto ({p.peopleCount} pers.)</span><span>€{totals.copertoTotal.toFixed(2)}</span></div>
+        )}
+        {totals.deliveryTotal > 0 && (
+          <div className="flex justify-between text-xs text-gray-600"><span>Delivery</span><span>€{totals.deliveryTotal.toFixed(2)}</span></div>
+        )}
+        {totals.extrasTotal > 0 && (
+          <div className="flex justify-between text-xs text-gray-600"><span>Extra</span><span>€{totals.extrasTotal.toFixed(2)}</span></div>
+        )}
+        <div className="flex justify-between items-baseline pt-1.5 border-t border-gray-700/40">
+          <span className="text-gray-400 text-sm font-semibold">Totale</span>
+          <span className="text-orange-400 font-black text-2xl tabular-nums">€{totals.grand.toFixed(2)}</span>
         </div>
       </div>
 
-      {/* Bottoni */}
-      <div className="p-3 shrink-0 space-y-2 border-t border-gray-700">
-        {p.success && <p className="text-green-400 text-sm text-center font-semibold animate-pulse">✅ Ordine inviato!</p>}
+      {/* ── Actions ── */}
+      <div className="p-3 shrink-0 space-y-2 border-t border-gray-700/40">
+        {p.success && (
+          <div className="bg-green-500/10 border border-green-500/30 rounded-xl py-2 text-center">
+            <p className="text-green-400 text-sm font-bold">✅ Ordine inviato!</p>
+          </div>
+        )}
         <button onClick={p.onSubmit} disabled={p.cartItems.length === 0 || p.saving}
-          className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white font-bold py-4 rounded-2xl text-base transition-colors">
-          {p.saving ? "⏳ Invio..." : `✅ Invia — €${totals.grand.toFixed(2)}`}
+          className={`w-full font-bold py-4 rounded-2xl text-sm transition-all duration-200 ${
+            p.cartItems.length > 0 && !p.saving
+              ? "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-white shadow-[0_4px_20px_rgba(249,115,22,0.3)] active:scale-[0.98]"
+              : "bg-gray-800 text-gray-600 cursor-not-allowed"
+          }`}>
+          {p.saving ? "⏳ Invio in corso..." : `✅ Invia ordine  ·  €${totals.grand.toFixed(2)}`}
         </button>
         <div className="grid grid-cols-2 gap-2">
           <button onClick={p.onGoToCassa}
-            className="bg-gray-700 hover:bg-gray-600 text-white text-sm py-3 rounded-2xl transition-colors font-medium">
-            💳 Cassa
+            className="bg-gray-800 hover:bg-gray-700 border border-gray-700/50 text-gray-300 text-xs py-3 rounded-2xl transition-all font-semibold">
+            💳 Vai alla cassa
           </button>
           <button onClick={p.onClearCart} disabled={p.cartItems.length === 0}
-            className="bg-gray-700 hover:bg-red-700 disabled:opacity-40 text-gray-300 text-sm py-3 rounded-2xl transition-colors font-medium">
+            className="bg-gray-800 hover:bg-red-900/20 hover:border-red-700/30 border border-gray-700/50 disabled:opacity-25 text-gray-500 hover:text-red-400 text-xs py-3 rounded-2xl transition-all font-semibold disabled:cursor-not-allowed">
             🗑 Svuota
           </button>
         </div>
@@ -290,13 +276,14 @@ function OrderPanel(p: OrderPanelProps) {
   );
 }
 
-// ─────────────────────────────────────────────────────────
-// PAGINA PRINCIPALE
-// ─────────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────
+   MAIN PAGE
+───────────────────────────────────────────────────────────── */
 export default function OrdiniPage() {
   const { loading } = useAuth();
   const router = useRouter();
 
+  // ── ALL STATE HOOKS — must be before any conditional return ──
   const [cartItems, setCartItems]             = useState<OrderItem[]>([]);
   const [extras, setExtras]                   = useState<ExtraItem[]>([]);
   const [newExtraDesc, setNewExtraDesc]       = useState("");
@@ -319,45 +306,46 @@ export default function OrdiniPage() {
   const [success, setSuccess]                 = useState(false);
   const [cartOpen, setCartOpen]               = useState(false);
 
+  // ── ALL useMemo HOOKS — must be before any conditional return ──
+  // BUG FIX: original code had useMemo AFTER if(loading) return — React hook rule violation
+  const displayedItems = useMemo(() => {
+    let items: typeof menu = searchQuery.trim()
+      ? menu.filter(m =>
+          m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          m.ingredients.some(i => i.toLowerCase().includes(searchQuery.toLowerCase()))
+        )
+      : menu.filter(m =>
+          m.category === activeCategory &&
+          (dietFilter === "tutti" || m.tag === dietFilter)
+        );
+    return [
+      ...items.filter(i => i.id !== "custom_pizza").sort((a, b) => a.name.localeCompare(b.name, "it")),
+      ...items.filter(i => i.id === "custom_pizza"),
+    ];
+  }, [searchQuery, activeCategory, dietFilter]);
+
+  // ── CONDITIONAL RETURN — only after all hooks ──────────────
   if (loading) return (
     <div className="flex items-center justify-center h-full">
-      <p className="text-white">Caricamento…</p>
+      <div className="text-center space-y-4">
+        <div className="relative w-14 h-14 mx-auto">
+          <div className="absolute inset-0 rounded-full border-2 border-orange-500/20" />
+          <div className="absolute inset-0 rounded-full border-2 border-t-orange-500 border-r-orange-500/0 border-b-orange-500/0 border-l-orange-500/0 animate-spin" />
+          <div className="absolute inset-0 flex items-center justify-center text-2xl">🍕</div>
+        </div>
+        <p className="text-gray-600 text-sm">Caricamento...</p>
+      </div>
     </div>
   );
 
-  // ── Prodotti filtrati + ordine alfabetico + custom sempre ultima ──
-  const displayedItems = useMemo(() => {
-    let items: typeof menu = [];
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      items = menu.filter(m =>
-        m.name.toLowerCase().includes(q) ||
-        m.ingredients.some(i => i.toLowerCase().includes(q))
-      );
-    } else {
-      items = menu.filter(m =>
-        m.category === activeCategory &&
-        (dietFilter === "tutti" || m.tag === dietFilter)
-      );
-    }
-
-    const pinned  = items.filter(i => i.id === "custom_pizza");
-    const regular = items
-      .filter(i => i.id !== "custom_pizza")
-      .sort((a, b) => a.name.localeCompare(b.name, "it"));
-
-    return [...regular, ...pinned];
-  }, [searchQuery, activeCategory, dietFilter]);
-
+  // ── DERIVED (non-hook) ─────────────────────────────────────
   const menuById   = (id: string) => menu.find(m => m.id === id);
   const totalItems = cartItems.reduce((s, i) => s + i.quantity, 0);
   const totals     = calcTotals(cartItems, extras, orderType, peopleCount, deliveryCost);
 
-  // ── Modal ──
+  // ── HANDLERS ──────────────────────────────────────────────
   const openModal = (item: MenuItem, cartId?: string) => {
-    setModalItem(item);
-    setEditingCartId(cartId ?? null);
+    setModalItem(item); setEditingCartId(cartId ?? null);
   };
 
   const handleModalConfirm = (cartItem: OrderItem) => {
@@ -366,11 +354,9 @@ export default function OrdiniPage() {
     } else {
       setCartItems(prev => [...prev, cartItem]);
     }
-    setModalItem(null);
-    setEditingCartId(null);
+    setModalItem(null); setEditingCartId(null);
   };
 
-  // ── Aggiunta/rimozione diretta (bibite, fritti) ──
   const directAdd = (item: MenuItem) => {
     setCartItems(prev => {
       const key = `${item.id}_direct`;
@@ -394,9 +380,7 @@ export default function OrdiniPage() {
     });
   };
 
-  const removeCartItem = (cartId: string) =>
-    setCartItems(prev => prev.filter(i => i.cartId !== cartId));
-
+  const removeCartItem = (cartId: string) => setCartItems(prev => prev.filter(i => i.cartId !== cartId));
   const clearCart = () => { setCartItems([]); setExtras([]); };
 
   const addExtra = () => {
@@ -429,7 +413,6 @@ export default function OrdiniPage() {
     } finally { setSaving(false); }
   };
 
-  // Props condivise per OrderPanel
   const panelProps: OrderPanelProps = {
     cartItems, extras, orderType, tableNumber, peopleCount, customerName,
     deliveryAddress, deliveryCost, desiredTime, isUrgent, orderNotes,
@@ -455,80 +438,176 @@ export default function OrdiniPage() {
     menuById,
   };
 
-  // ── Griglia prodotti (condivisa) ──
-  const ProductGrid = ({ mobile = false }: { mobile?: boolean }) => (
-    <>
-      {displayedItems.map(item => {
-        const isDirect  = !MODAL_CATEGORIES.includes(item.category as MenuCategory);
-        const isCustom  = item.id === "custom_pizza";
-        const directQty = cartItems.find(i => i.cartId === `${item.id}_direct`)?.quantity ?? 0;
-        const modalQty  = cartItems
-          .filter(i => i.id === item.id && !i.cartId.includes("direct"))
-          .reduce((s, i) => s + i.quantity, 0);
-        const totalQty  = directQty + modalQty;
+  // ── MENU CARD (inline render helper — not a React component) ─
+  const renderMenuCard = (item: MenuItem) => {
+    const isDirect  = !MODAL_CATEGORIES.includes(item.category as MenuCategory);
+    const isCustom  = item.id === "custom_pizza";
+    const directQty = cartItems.find(i => i.cartId === `${item.id}_direct`)?.quantity ?? 0;
+    const modalQty  = cartItems.filter(i => i.id === item.id && !i.cartId.includes("direct")).reduce((s, i) => s + i.quantity, 0);
+    const totalQty  = directQty + modalQty;
+    const inCart    = totalQty > 0;
 
-        return (
-          <button
-            key={item.id}
-            onClick={() => isDirect ? directAdd(item) : openModal(item)}
-            className={`border-2 rounded-2xl p-3 text-left transition-all ${
-              isCustom
-                ? totalQty > 0
-                  ? "bg-purple-900/30 border-purple-500"
-                  : "bg-purple-900/20 border-purple-800 hover:border-purple-600"
-                : totalQty > 0
-                  ? "bg-orange-500/5 border-orange-500 bg-gray-800"
-                  : "bg-gray-800 border-gray-700 hover:border-gray-500"
+    return (
+      <div key={item.id} className="relative">
+        <button
+          onClick={() => isDirect ? directAdd(item) : openModal(item)}
+          className={`w-full border rounded-2xl p-3 text-left transition-all duration-200 group ${
+            isCustom
+              ? inCart
+                ? "bg-purple-950/50 border-purple-500/60 shadow-[0_0_20px_rgba(168,85,247,0.12)]"
+                : "bg-purple-950/20 border-purple-800/30 hover:border-purple-600/50 hover:bg-purple-950/30"
+              : inCart
+                ? "bg-[#1a1200] border-orange-500/50 shadow-[0_0_16px_rgba(249,115,22,0.08)]"
+                : "bg-gray-800/50 border-gray-700/30 hover:border-gray-600/60 hover:bg-gray-800/80"
+          }`}>
+
+          {/* Qty badge */}
+          {inCart && (
+            <span className={`absolute -top-2 -right-2 z-10 w-6 h-6 rounded-full text-[11px] font-black text-white flex items-center justify-center shadow-lg ${
+              isCustom ? "bg-purple-500" : "bg-orange-500"
             }`}>
-            <div className="flex justify-between items-start mb-2">
-              <p className={`font-bold text-sm leading-tight flex-1 pr-1 ${isCustom ? "text-purple-300" : "text-white"}`}>
-                {item.name}
-              </p>
-              {totalQty > 0 && (
-                <span className={`text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold shrink-0 ${isCustom ? "bg-purple-600" : "bg-orange-500"}`}>
-                  {totalQty}
-                </span>
-              )}
-            </div>
-            {item.note && <p className="text-gray-500 text-xs mb-1 italic">{item.note}</p>}
-            <div className="flex items-center gap-2 mb-2">
-              <span className={`font-black text-base ${isCustom ? "text-purple-400" : "text-orange-400"}`}>
-                €{item.price.toFixed(2)}
-              </span>
-              {item.maxiPrice && (
-                <span className="text-yellow-600 text-xs font-semibold">M:€{item.maxiPrice}</span>
-              )}
-            </div>
-            <span className={`text-xs px-2 py-0.5 rounded-full ${
-              item.tag === "vegetariano" ? "bg-green-700 text-green-100" :
-              item.tag === "vegano"      ? "bg-emerald-700 text-emerald-100" :
-                                          "bg-gray-600 text-gray-200"
-            }`}>
-              {item.tag === "vegetariano" ? "🌿" : item.tag === "vegano" ? "🥦" : "🍽"}
+              {totalQty}
             </span>
-            {!isDirect && (
-              <p className={`text-xs mt-1.5 ${isCustom ? "text-purple-700" : "text-gray-600"}`}>
-                ✏️ tocca per personalizzare
-              </p>
+          )}
+
+          {/* Top row */}
+          <div className="flex items-start justify-between gap-1 mb-1">
+            <p className={`font-bold text-sm leading-tight flex-1 ${isCustom ? "text-purple-300" : "text-white"}`}>
+              {item.name}
+            </p>
+            <span className={`text-[10px] rounded-full shrink-0 leading-none ${
+              item.tag === "vegetariano"
+                ? "text-green-500"
+                : item.tag === "vegano"
+                ? "text-emerald-400"
+                : "text-transparent"
+            }`}>
+              {item.tag === "vegetariano" ? "🌿" : item.tag === "vegano" ? "🥦" : "·"}
+            </span>
+          </div>
+
+          {/* Note badge */}
+          {item.note && (
+            <span className="inline-block text-[9px] uppercase tracking-wider text-gray-600 font-bold mb-1.5 bg-gray-700/40 px-1.5 py-0.5 rounded-full">
+              {item.note}
+            </span>
+          )}
+
+          {/* Ingredients — desktop only */}
+          {item.ingredients.length > 0 && !isCustom && (
+            <p className="hidden xl:block text-[10px] text-gray-600 leading-relaxed mb-2 line-clamp-2">
+              {item.ingredients.join(", ")}
+            </p>
+          )}
+
+          {/* Price row */}
+          <div className="flex items-baseline gap-2 mt-1">
+            <span className={`font-black text-base tabular-nums ${isCustom ? "text-purple-400" : "text-orange-400"}`}>
+              €{item.price.toFixed(2)}
+            </span>
+            {item.maxiPrice && (
+              <span className="text-[9px] text-amber-600/80 font-bold">MAXI €{item.maxiPrice}</span>
             )}
-            {isDirect && directQty > 0 && (
-              <div className="flex items-center gap-2 mt-2" onClick={e => e.stopPropagation()}>
-                <button onClick={() => directRemove(item)}
-                  className="w-8 h-8 bg-gray-600 active:bg-red-600 text-white rounded-xl text-lg font-bold flex items-center justify-center transition-colors">−</button>
-                <span className="text-white font-bold">{directQty}</span>
-                <button onClick={() => directAdd(item)}
-                  className="w-8 h-8 bg-gray-600 active:bg-green-600 text-white rounded-xl text-lg font-bold flex items-center justify-center transition-colors">+</button>
-              </div>
-            )}
-          </button>
-        );
-      })}
-    </>
+          </div>
+
+          {/* Customize hint */}
+          {!isDirect && (
+            <p className={`text-[10px] mt-1.5 transition-opacity ${isCustom ? "text-purple-800 group-hover:text-purple-600" : "text-gray-700 group-hover:text-gray-500"}`}>
+              ✏️ personalizza
+            </p>
+          )}
+        </button>
+
+        {/* Direct qty controls (bibite, fritti) */}
+        {isDirect && directQty > 0 && (
+          <div className="absolute bottom-3 right-3 flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+            <button onClick={() => directRemove(item)}
+              className="w-7 h-7 bg-gray-700 hover:bg-red-600/50 text-white rounded-lg font-bold text-sm flex items-center justify-center transition-all active:scale-90">
+              −
+            </button>
+            <span className="text-white font-bold text-sm w-5 text-center tabular-nums">{directQty}</span>
+            <button onClick={() => directAdd(item)}
+              className="w-7 h-7 bg-gray-700 hover:bg-green-600/50 text-white rounded-lg font-bold text-sm flex items-center justify-center transition-all active:scale-90">
+              +
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  /* ── SHARED: search + filters ──────────────────────────────── */
+  const SearchBar = ({ mobile = false }: { mobile?: boolean }) => (
+    <div className="relative">
+      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none">🔍</span>
+      <input
+        type="text"
+        value={searchQuery}
+        onChange={e => setSearchQuery(e.target.value)}
+        placeholder={mobile ? "Cerca..." : "Cerca prodotto o ingrediente..."}
+        className={`w-full bg-gray-800/70 text-white rounded-2xl pl-10 pr-10 outline-none ring-1 ring-gray-700/60 focus:ring-orange-500/50 transition-all placeholder:text-gray-600 ${
+          mobile ? "py-3 text-base" : "py-2.5 text-sm"
+        }`}
+      />
+      {searchQuery && (
+        <button onClick={() => setSearchQuery("")}
+          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors text-xl leading-none">
+          ×
+        </button>
+      )}
+    </div>
   );
 
+  const CategoryTabs = ({ mobile = false }: { mobile?: boolean }) => (
+    <div className={`flex gap-1.5 ${mobile ? "overflow-x-auto scrollbar-hide pb-0.5" : "flex-wrap"}`}>
+      {(Object.keys(categoryLabels) as MenuCategory[]).map(cat => (
+        <button key={cat} onClick={() => setActiveCategory(cat)}
+          className={`whitespace-nowrap font-bold transition-all duration-200 shrink-0 ${
+            mobile ? "px-3.5 py-2 rounded-xl text-sm" : "px-3 py-1.5 rounded-xl text-sm"
+          } ${
+            activeCategory === cat
+              ? "bg-orange-500 text-white shadow-[0_4px_12px_rgba(249,115,22,0.3)]"
+              : "bg-gray-800/60 text-gray-500 border border-gray-700/40 hover:text-gray-200 hover:bg-gray-800"
+          }`}>
+          {categoryLabels[cat]}
+        </button>
+      ))}
+    </div>
+  );
+
+  const DietTabs = ({ mobile = false }: { mobile?: boolean }) => (
+    <div className={`flex gap-1.5 ${mobile ? "overflow-x-auto scrollbar-hide pb-0.5" : ""}`}>
+      {(["tutti", "normale", "vegetariano", "vegano"] as const).map(f => (
+        <button key={f} onClick={() => setDietFilter(f)}
+          className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border shrink-0 transition-all ${
+            dietFilter === f
+              ? "border-orange-500/40 bg-orange-500/10 text-orange-300"
+              : "border-gray-700/40 text-gray-600 hover:border-gray-600 hover:text-gray-400"
+          }`}>
+          {f === "tutti" ? "Tutti" : f === "vegetariano" ? "🌿 Veg" : f === "vegano" ? "🥦 Vegano" : "🍽 Normale"}
+        </button>
+      ))}
+    </div>
+  );
+
+  const EmptyGrid = () => (
+    <div className="col-span-full flex flex-col items-center justify-center py-20 text-gray-700">
+      <span className="text-5xl mb-4 opacity-50">🔍</span>
+      <p className="text-base font-medium">Nessun prodotto trovato</p>
+      {searchQuery && (
+        <button onClick={() => setSearchQuery("")} className="mt-3 text-sm text-orange-500 hover:text-orange-400 transition-colors">
+          Cancella ricerca
+        </button>
+      )}
+    </div>
+  );
+
+  /* ────────────────────────────────────────────────────────────
+     RENDER
+  ──────────────────────────────────────────────────────────── */
   return (
     <>
-      {/* MODAL PERSONALIZZAZIONE */}
+      {/* Customize modal */}
       {modalItem && (
         <ItemCustomizeModal
           item={modalItem}
@@ -538,151 +617,128 @@ export default function OrdiniPage() {
         />
       )}
 
-      {/* ════════════ LAYOUT DESKTOP (md+) ════════════ */}
+      {/* ════════════════════════════════════════
+          DESKTOP  md+
+      ════════════════════════════════════════ */}
       <div className="hidden md:flex gap-4 h-[calc(100vh-80px)]">
 
-        {/* Colonna menu */}
-        <div className="flex-1 min-w-0 flex flex-col gap-3 overflow-hidden">
-          <input
-            type="text" value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            onFocus={() => setSearchQuery("")}
-            placeholder="🔍  Cerca prodotto o ingrediente..."
-            className="w-full bg-gray-800 text-white rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-orange-500 border border-gray-700"
-          />
-          {!searchQuery && (
-            <>
-              <div className="flex gap-1.5 flex-wrap">
-                {(Object.keys(categoryLabels) as MenuCategory[]).map(cat => (
-                  <button key={cat} onClick={() => setActiveCategory(cat)}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                      activeCategory === cat ? "bg-orange-500 text-white" : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                    }`}>
-                    {categoryLabels[cat]}
-                  </button>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                {(["tutti", "normale", "vegetariano", "vegano"] as const).map(f => (
-                  <button key={f} onClick={() => setDietFilter(f)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                      dietFilter === f ? "border-white bg-white text-gray-900" : "border-gray-600 text-gray-400"
-                    }`}>
-                    {f === "tutti" ? "🍽 Tutti" : f === "vegetariano" ? "🌿 Veg" : f === "vegano" ? "🥦 Vegano" : "Normale"}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-          {searchQuery && (
-            <p className="text-gray-400 text-sm shrink-0">
-              {displayedItems.length} risultati per <span className="text-orange-400">"{searchQuery}"</span>
+        {/* Left: Menu */}
+        <div className="flex-1 min-w-0 flex flex-col gap-2.5 overflow-hidden">
+
+          {/* Search */}
+          <SearchBar />
+
+          {/* Filters */}
+          {!searchQuery ? (
+            <div className="flex flex-col gap-2 shrink-0">
+              <CategoryTabs />
+              <DietTabs />
+            </div>
+          ) : (
+            <p className="text-gray-600 text-xs shrink-0">
+              {displayedItems.length} {displayedItems.length === 1 ? "risultato" : "risultati"} per{" "}
+              <span className="text-orange-400 font-semibold">"{searchQuery}"</span>
             </p>
           )}
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 overflow-y-auto pr-1 pb-2">
-            {displayedItems.length === 0 && (
-              <div className="col-span-3 text-center text-gray-500 mt-10">
-                <p className="text-4xl mb-2">🔍</p>
-                <p>Nessun prodotto trovato</p>
-              </div>
-            )}
-            <ProductGrid />
+
+          {/* Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 overflow-y-auto pb-2 pr-0.5 content-start">
+            {displayedItems.length === 0 ? <EmptyGrid /> : displayedItems.map(renderMenuCard)}
           </div>
         </div>
 
-        {/* Pannello ordine */}
-        <div className="w-80 bg-gray-800 rounded-2xl flex flex-col overflow-hidden border border-gray-700">
-          <div className="px-4 pt-3 pb-2 border-b border-gray-700 shrink-0 flex items-center justify-between">
-            <h2 className="text-white font-bold">🧾 Ordine</h2>
-            <div className="flex items-center gap-2">
+        {/* Right: Order panel */}
+        <div className="w-[300px] shrink-0 flex flex-col overflow-hidden bg-gray-800/40 border border-gray-700/30 rounded-2xl backdrop-blur-sm">
+          {/* Panel header */}
+          <div className="px-4 py-3 border-b border-gray-700/40 shrink-0 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="text-white font-bold text-sm">🧾 Ordine</span>
               {totalItems > 0 && (
-                <span className="bg-orange-500 text-white text-xs rounded-full px-2 py-0.5 font-bold">{totalItems}</span>
+                <span className="bg-orange-500 text-white text-[10px] rounded-full px-2 py-0.5 font-black tabular-nums">
+                  {totalItems}
+                </span>
               )}
-              {isUrgent && <span className="text-red-400 text-xs font-bold animate-pulse">🔴 URGENTE</span>}
+            </div>
+            <div className="flex items-center gap-2">
+              {isUrgent && (
+                <span className="text-red-400 text-[10px] font-bold animate-pulse">🔴 URGENTE</span>
+              )}
+              {totals.grand > 0 && (
+                <span className="text-orange-400 text-sm font-black tabular-nums">€{totals.grand.toFixed(2)}</span>
+              )}
             </div>
           </div>
-          <OrderPanel {...panelProps} />
+          <div className="flex-1 overflow-hidden">
+            <OrderPanel {...panelProps} />
+          </div>
         </div>
       </div>
 
-      {/* ════════════ LAYOUT MOBILE ════════════ */}
+      {/* ════════════════════════════════════════
+          MOBILE  < md
+      ════════════════════════════════════════ */}
       <div className="md:hidden flex flex-col h-full overflow-hidden">
 
-        {/* Barra search + filtri */}
+        {/* Search + filters */}
         <div className="shrink-0 space-y-2 mb-2">
-          <input
-            type="text" value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            onFocus={() => setSearchQuery("")}
-            placeholder="🔍  Cerca prodotto..."
-            className="w-full bg-gray-800 text-white rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 border border-gray-700 text-base"
-          />
-          {!searchQuery && (
+          <SearchBar mobile />
+          {!searchQuery ? (
             <>
-              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                {(Object.keys(categoryLabels) as MenuCategory[]).map(cat => (
-                  <button key={cat} onClick={() => setActiveCategory(cat)}
-                    className={`px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-colors shrink-0 ${
-                      activeCategory === cat ? "bg-orange-500 text-white" : "bg-gray-700 text-gray-300"
-                    }`}>
-                    {categoryLabels[cat]}
-                  </button>
-                ))}
-              </div>
-              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                {(["tutti", "normale", "vegetariano", "vegano"] as const).map(f => (
-                  <button key={f} onClick={() => setDietFilter(f)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border shrink-0 transition-colors ${
-                      dietFilter === f ? "border-orange-500 bg-orange-500/20 text-orange-300" : "border-gray-600 text-gray-400"
-                    }`}>
-                    {f === "tutti" ? "🍽 Tutti" : f === "vegetariano" ? "🌿 Veg" : f === "vegano" ? "🥦 Vegano" : "Normale"}
-                  </button>
-                ))}
-              </div>
+              <CategoryTabs mobile />
+              <DietTabs mobile />
             </>
-          )}
-          {searchQuery && (
-            <p className="text-gray-400 text-sm">
-              {displayedItems.length} risultati per <span className="text-orange-400">"{searchQuery}"</span>
+          ) : (
+            <p className="text-gray-600 text-xs">
+              {displayedItems.length} risultati per <span className="text-orange-400 font-semibold">"{searchQuery}"</span>
             </p>
           )}
         </div>
 
-        {/* Griglia prodotti */}
-        <div className="flex-1 overflow-y-auto grid grid-cols-2 gap-2.5 pb-2 content-start">
-          {displayedItems.length === 0 && (
-            <div className="col-span-2 text-center text-gray-500 mt-10">
-              <p className="text-4xl mb-2">🔍</p>
-              <p>Nessun prodotto trovato</p>
-            </div>
-          )}
-          <ProductGrid mobile />
+        {/* Product grid */}
+        <div className="flex-1 overflow-y-auto grid grid-cols-2 gap-2 pb-2 content-start">
+          {displayedItems.length === 0 ? <EmptyGrid /> : displayedItems.map(renderMenuCard)}
         </div>
 
-        {/* FAB carrello */}
+        {/* ── Cart FAB ── */}
         {totalItems > 0 && !cartOpen && (
-          <button onClick={() => setCartOpen(true)}
-            className="fixed bottom-20 right-4 z-30 bg-orange-500 text-white rounded-2xl px-5 py-3.5 shadow-2xl flex items-center gap-3 font-bold text-base active:scale-95 transition-transform">
-            <span className="text-xl">🛒</span>
-            <span>{totalItems} prodotti</span>
-            <span className="bg-white/20 rounded-xl px-2 py-0.5">€{totals.grand.toFixed(2)}</span>
+          <button
+            onClick={() => setCartOpen(true)}
+            className="fixed bottom-[72px] right-4 z-30 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-2xl pl-4 pr-5 py-3.5 shadow-[0_8px_32px_rgba(249,115,22,0.45)] flex items-center gap-2.5 font-bold text-sm active:scale-95 transition-transform">
+            <span className="text-lg">🛒</span>
+            <span>{totalItems} {totalItems === 1 ? "prodotto" : "prodotti"}</span>
+            <span className="bg-black/20 rounded-lg px-2 py-0.5 text-xs font-black tabular-nums">
+              €{totals.grand.toFixed(2)}
+            </span>
           </button>
         )}
 
-        {/* Bottom sheet carrello */}
+        {/* ── Cart bottom sheet ── */}
         {cartOpen && (
           <div className="fixed inset-0 z-50 flex flex-col justify-end">
-            <div className="absolute inset-0 bg-black/60" onClick={() => setCartOpen(false)} />
-            <div className="relative bg-gray-800 rounded-t-3xl flex flex-col z-10 max-h-[90vh]">
-              <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-700 shrink-0">
-                <div className="absolute top-3 left-1/2 -translate-x-1/2 w-10 h-1 bg-gray-600 rounded-full" />
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-black/70"
+              style={{ backdropFilter: "blur(4px)" }}
+              onClick={() => setCartOpen(false)}
+            />
+            {/* Sheet */}
+            <div className="relative bg-gray-900 rounded-t-3xl flex flex-col z-10 max-h-[92vh] border-t border-gray-700/30">
+              {/* Drag handle */}
+              <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-10 h-1 bg-gray-700 rounded-full" />
+
+              {/* Sheet header */}
+              <div className="flex items-center justify-between px-5 pt-6 pb-3 border-b border-gray-700/40 shrink-0">
                 <div className="flex items-center gap-3">
-                  <h2 className="text-white font-bold text-lg">🧾 Il tuo ordine</h2>
-                  <span className="bg-orange-500 text-white text-xs rounded-full px-2 py-0.5 font-bold">{totalItems}</span>
+                  <span className="text-white font-bold">🧾 Il tuo ordine</span>
+                  <span className="bg-orange-500 text-white text-xs rounded-full px-2.5 py-0.5 font-black">{totalItems}</span>
+                  {isUrgent && <span className="text-red-400 text-xs font-bold animate-pulse">🔴 URGENTE</span>}
                 </div>
                 <button onClick={() => setCartOpen(false)}
-                  className="text-gray-400 text-3xl w-10 h-10 flex items-center justify-center hover:text-white">×</button>
+                  className="w-9 h-9 bg-gray-800 hover:bg-gray-700 text-gray-500 hover:text-white rounded-xl flex items-center justify-center text-xl transition-all">
+                  ×
+                </button>
               </div>
+
               <div className="flex-1 overflow-y-auto">
                 <OrderPanel {...panelProps} />
               </div>
