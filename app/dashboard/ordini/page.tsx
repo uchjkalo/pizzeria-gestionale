@@ -260,15 +260,15 @@ interface OrderPanelProps {
   menuById: (id: string) => MenuItem | undefined;
 }
 
-function OrderPanel(p: OrderPanelProps) {
-  const totals     = calcTotals(p.cartItems, p.extras, p.orderType, p.peopleCount, p.deliveryCost);
-  const totalItems = p.cartItems.reduce((s, i) => s + i.quantity, 0);
-
+/* ─────────────────────────────────────────────────────────────
+   ORDER PANEL — BODY (scrollable)
+───────────────────────────────────────────────────────────── */
+function OrderPanelBody(p: OrderPanelProps) {
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col">
 
       {/* Type selector */}
-      <div className="p-3 border-b border-gray-700/40 shrink-0 space-y-2.5">
+      <div className="p-3 border-b border-gray-700/40 space-y-2.5">
         <div className="grid grid-cols-3 gap-1 bg-gray-900/60 p-1 rounded-2xl">
           {(["tavolo", "asporto", "delivery"] as OrderType[]).map(t => {
             const active = p.orderType === t;
@@ -351,9 +351,9 @@ function OrderPanel(p: OrderPanelProps) {
       </div>
 
       {/* Cart items */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+      <div className="p-3 space-y-2">
         {p.cartItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-700 select-none pt-10">
+          <div className="flex flex-col items-center justify-center py-10 text-gray-700 select-none">
             <div className="text-4xl mb-3 opacity-30">🛒</div>
             <p className="text-sm font-medium text-gray-600">Carrello vuoto</p>
             <p className="text-xs mt-1 text-gray-700">Aggiungi prodotti dal menu</p>
@@ -399,7 +399,7 @@ function OrderPanel(p: OrderPanelProps) {
                       <p className="text-orange-300 text-[10px]">✏️ {ci.manualAdditions.map(m => m.name).join(", ")}</p>
                     )}
                     {ci.notes && (
-                      <p className="text-gray-600 text-[10px] italic">"{ci.notes}"</p>
+                      <p className="text-gray-600 text-[10px] italic">&quot;{ci.notes}&quot;</p>
                     )}
                     <p className="text-orange-400 text-[10px] font-semibold mt-0.5">
                       €{ci.effectivePrice.toFixed(2)} × {ci.quantity} ={" "}
@@ -426,7 +426,7 @@ function OrderPanel(p: OrderPanelProps) {
       </div>
 
       {/* Extra manuale */}
-      <div className="px-3 pb-2 shrink-0 border-t border-gray-700/40 pt-2.5">
+      <div className="px-3 pb-2 border-t border-gray-700/40 pt-2.5">
         <p className={`${labelCls} mb-2`}>Extra ordine</p>
         <div className="flex gap-1.5">
           <input value={p.newExtraDesc} onChange={e => p.onNewExtraDescChange(e.target.value)}
@@ -455,15 +455,26 @@ function OrderPanel(p: OrderPanelProps) {
       </div>
 
       {/* Note cucina */}
-      <div className="px-3 pb-2 shrink-0">
+      <div className="px-3 pb-3">
         <textarea value={p.orderNotes} onChange={e => p.onOrderNotesChange(e.target.value)}
           placeholder="📋 Note per la cucina..."
           rows={2}
           className="w-full bg-gray-900 text-white rounded-xl px-3 py-2 text-sm outline-none ring-1 ring-gray-700/60 focus:ring-orange-500/50 resize-none placeholder:text-gray-700" />
       </div>
+    </div>
+  );
+}
 
+/* ─────────────────────────────────────────────────────────────
+   ORDER PANEL — FOOTER (sticky: totals + actions)
+───────────────────────────────────────────────────────────── */
+function OrderPanelFooter(p: OrderPanelProps) {
+  const totals = calcTotals(p.cartItems, p.extras, p.orderType, p.peopleCount, p.deliveryCost);
+
+  return (
+    <div className="border-t border-gray-700/40 bg-gray-900/80 backdrop-blur-sm">
       {/* Totale */}
-      <div className="px-3 pb-2 shrink-0 border-t border-gray-700/40 pt-2 space-y-1">
+      <div className="px-3 pt-2.5 pb-1.5 space-y-1">
         {totals.copertoTotal > 0 && (
           <div className="flex justify-between text-xs text-gray-600">
             <span>Coperto ({p.peopleCount} pers.)</span>
@@ -487,7 +498,7 @@ function OrderPanel(p: OrderPanelProps) {
       </div>
 
       {/* Actions */}
-      <div className="p-3 shrink-0 space-y-2 border-t border-gray-700/40">
+      <div className="p-3 space-y-2">
         {p.success && (
           <div className="bg-green-500/10 border border-green-500/30 rounded-xl py-2 text-center">
             <p className="text-green-400 text-sm font-bold">✅ Ordine inviato!</p>
@@ -517,6 +528,22 @@ function OrderPanel(p: OrderPanelProps) {
             🗑 Svuota
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   ORDER PANEL — DESKTOP WRAPPER (body scrolls, footer fixed)
+───────────────────────────────────────────────────────────── */
+function OrderPanelDesktop(p: OrderPanelProps) {
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <OrderPanelBody {...p} />
+      </div>
+      <div className="shrink-0">
+        <OrderPanelFooter {...p} />
       </div>
     </div>
   );
@@ -767,7 +794,7 @@ export default function OrdiniPage() {
             </div>
           </div>
           <div className="flex-1 overflow-hidden">
-            <OrderPanel {...panelProps} />
+            <OrderPanelDesktop {...panelProps} />
           </div>
         </div>
       </div>
@@ -851,8 +878,11 @@ export default function OrdiniPage() {
                   ×
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto">
-                <OrderPanel {...panelProps} />
+              <div className="flex-1 overflow-y-auto min-h-0">
+                <OrderPanelBody {...panelProps} />
+              </div>
+              <div className="shrink-0">
+                <OrderPanelFooter {...panelProps} />
               </div>
             </div>
           </div>
