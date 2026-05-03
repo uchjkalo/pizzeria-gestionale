@@ -292,7 +292,7 @@ function PayModal({ order, initialQuickExtras, onConfirm, onClose }: PayModalPro
                   <div className="flex gap-2">
                     <div className="relative flex-1">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 text-sm font-bold">€</span>
-                      <input type="number" min={0} step={0.5} value={customPrice}
+                      <input type="number" step={0.5} value={customPrice}
                         onChange={e => setCustomPrice(e.target.value)}
                         onKeyDown={e => e.key === "Enter" && addCustom()}
                         placeholder="0.00"
@@ -399,7 +399,7 @@ function PayModal({ order, initialQuickExtras, onConfirm, onClose }: PayModalPro
                 className={`w-full py-2.5 rounded-xl text-sm border transition-all ${
                   felice ? "border-yellow-500/40 bg-yellow-500/10 text-yellow-300" : "border-gray-700 bg-gray-800 text-gray-500"
                 }`}>
-                {felice ? "😊 Con scontrino" : "😐 Senza scontrino"}
+                {felice ? "😊" : "😐"}
               </button>
             </div>
           )}
