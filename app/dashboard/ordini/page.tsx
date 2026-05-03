@@ -276,14 +276,17 @@ function OrderPanelBody(p: OrderPanelProps) {
       {/* Extra manuali */}
       <div>
         <p className={`${labelCls} mb-2`}>Extra ordine</p>
-        <div className="flex gap-1.5">
+        <div className="flex gap-1.5 min-w-0">
           <input value={p.newExtraDesc} onChange={e => p.onNewExtraDescChange(e.target.value)}
             onKeyDown={e => e.key === "Enter" && p.onAddExtra()} placeholder="Descrizione"
-            className="flex-1 bg-gray-900 text-white rounded-xl px-3 py-2.5 text-sm outline-none ring-1 ring-gray-700/60 focus:ring-orange-500/50 placeholder:text-gray-700" />
+            className="min-w-0 flex-1 bg-gray-900 text-white rounded-xl px-3 py-2.5 text-sm outline-none ring-1 ring-gray-700/60 focus:ring-orange-500/50 placeholder:text-gray-700" />
           <input value={p.newExtraPrice} onChange={e => p.onNewExtraPriceChange(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && p.onAddExtra()} placeholder="€" type="number" min={0} step={0.5}
-            className="w-16 bg-gray-900 text-white rounded-xl px-2 py-2.5 text-sm outline-none ring-1 ring-gray-700/60" />
-          <button onClick={p.onAddExtra} className="bg-orange-500 hover:bg-orange-400 text-white rounded-xl px-3 font-bold text-lg transition-colors">+</button>
+            onKeyDown={e => e.key === "Enter" && p.onAddExtra()} placeholder="€" type="number" step={0.5}
+            className="w-11 shrink-0 bg-gray-900 text-white rounded-xl px-1 py-2.5 text-sm text-center outline-none ring-1 ring-gray-700/60" />
+          <button onClick={p.onAddExtra}
+            className="shrink-0 w-10 h-10 bg-orange-500 hover:bg-orange-400 active:bg-orange-600 text-white rounded-xl font-bold text-xl flex items-center justify-center transition-colors">
+            +
+          </button>
         </div>
         {p.extras.map((e, i) => (
           <div key={i} className="flex justify-between items-center mt-1.5 bg-gray-900/60 rounded-lg px-2.5 py-1.5">
