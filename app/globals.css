@@ -1,29 +1,147 @@
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════════════════════
+   DESIGN TOKENS - Ispirato da alcjanton.it (Scuro & Elegante)
+   Rosso: #c2262e | Nero: #1c1c1c | Crema: #FEF3D2
+   ═══════════════════════════════════════════════════════════════ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Colori Primari */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  
+  /* Scala di Grigi (Dark Background) */
+  --color-gray-50: #1c1c1c;
+  --color-gray-100: #242424;
+  --color-gray-200: #2d2d2d;
+  --color-gray-300: #3a3a3a;
+  --color-gray-400: #505050;
+  --color-gray-500: #666666;
+  --color-gray-600: #888888;
+  --color-gray-700: #aaaaaa;
+  --color-gray-800: #cccccc;
+  --color-gray-900: #f7fafc;
+  
+  /* Colori Accento - Rosso & Crema */
+  --color-accent-red: #c2262e;
+  --color-accent-red-light: #e63946;
+  --color-accent-orange: #FEF3D2;
+  --color-accent-orange-light: #fff5e6;
+  
+  /* Status Colors */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #c2262e;
+  --color-info: #3b82f6;
+  
+  /* Semantic Colors - Dark Theme Elegante */
+  --color-bg-primary: #1c1c1c;
+  --color-bg-secondary: #242424;
+  --color-bg-tertiary: #2d2d2d;
+  --color-bg-inverse: #ffffff;
+  
+  --color-text-primary: #FEF3D2;
+  --color-text-secondary: #cccccc;
+  --color-text-tertiary: #888888;
+  --color-text-inverse: #1c1c1c;
+  
+  --color-border: #2d3748;
+  --color-border-strong: #4a5568;
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-base: 1rem;
+  --spacing-md: 1.5rem;
+  --spacing-lg: 2rem;
+  --spacing-xl: 3rem;
+  --spacing-2xl: 4rem;
+  
+  /* Typography */
+  --font-family-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  --font-family-mono: "Courier New", monospace;
+  
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* Line Heights */
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+  
+  /* Border Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-white: var(--color-white);
+  --color-black: var(--color-black);
+  --color-gray-50: var(--color-gray-50);
+  --color-gray-100: var(--color-gray-100);
+  --color-gray-200: var(--color-gray-200);
+  --color-gray-300: var(--color-gray-300);
+  --color-gray-400: var(--color-gray-400);
+  --color-gray-500: var(--color-gray-500);
+  --color-gray-600: var(--color-gray-600);
+  --color-gray-700: var(--color-gray-700);
+  --color-gray-800: var(--color-gray-800);
+  --color-gray-900: var(--color-gray-900);
+  
+  --color-accent-red: var(--color-accent-red);
+  --color-accent-red-light: var(--color-accent-red-light);
+  --color-accent-orange: var(--color-accent-orange);
+  --color-accent-orange-light: var(--color-accent-orange-light);
+  
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-error: var(--color-error);
+  --color-info: var(--color-info);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   UTILITIES & HELPERS
+   ═══════════════════════════════════════════════════════════════ */
 
 @layer utilities {
   .scrollbar-hide {
@@ -33,4 +151,67 @@ body {
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Transitions */
+  .transition-fast {
+    transition-duration: var(--transition-fast);
+  }
+  .transition-base {
+    transition-duration: var(--transition-base);
+  }
+  .transition-slow {
+    transition-duration: var(--transition-slow);
+  }
+
+  /* Text utilities */
+  .text-primary { @apply text-gray-900; }
+  .text-secondary { @apply text-gray-700; }
+  .text-tertiary { @apply text-gray-600; }
+  .text-inverse { @apply text-gray-50; }
+
+  /* Background utilities */
+  .bg-primary { @apply bg-gray-50; }
+  .bg-secondary { @apply bg-gray-100; }
+  .bg-tertiary { @apply bg-gray-200; }
+  .bg-inverse { @apply bg-gray-900; }
+
+  /* Accent utilities */
+  .accent-red { @apply text-accent-red; }
+  .accent-orange { @apply text-accent-orange; }
+  .bg-accent-red { @apply bg-accent-red text-white; }
+  .bg-accent-orange { @apply bg-accent-orange text-white; }
+
+  /* Focus Ring */
+  .focus-ring { @apply focus:outline-none focus:ring-2 focus:ring-accent-orange focus:ring-offset-2; }
+  .focus-ring-offset-0 { @apply focus:outline-none focus:ring-2 focus:ring-accent-orange; }
+
+  /* Hover Effects */
+  .hover-lift { @apply transition-all hover:shadow-lg hover:-translate-y-1; }
+  .hover-scale { @apply transition-transform hover:scale-105; }
+
+  /* Disabled State */
+  .disabled-state { @apply opacity-50 cursor-not-allowed; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   COMPONENT STYLES
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Scrollbar styling per browser moderni */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-gray-200);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-gray-500);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gray-600);
 }

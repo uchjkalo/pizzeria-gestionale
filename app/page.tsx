@@ -25,56 +25,90 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-      <div className="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md">
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md">
+        {/* Card */}
+        <div className="bg-gray-100 rounded-2xl shadow-lg overflow-hidden">
+          {/* Header con accento */}
+          <div className="h-1 bg-gradient-to-r from-red-600 to-red-800"></div>
+          
+          {/* Contenuto */}
+          <div className="p-8 sm:p-10">
+            {/* Logo / Titolo */}
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-200 rounded-full mb-4">
+                <span className="text-4xl">🍕</span>
+              </div>
+              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Al Cjanton</h1>
+              <p className="text-gray-600 text-sm mt-2 font-medium">Gestionale interno</p>
+            </div>
 
-        {/* Logo / Titolo */}
-        <div className="text-center mb-8">
-          <span className="text-5xl">🍕</span>
-          <h1 className="text-white text-3xl font-bold mt-2">Pizzeria</h1>
-          <p className="text-gray-400 text-sm mt-1">Gestionale interno</p>
+            {/* Form */}
+            <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }} className="space-y-5">
+              {/* Email */}
+              <div>
+                <label htmlFor="email" className="block text-sm font-semibold text-gray-900 mb-2">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="nome@pizzeria.it"
+                  className="w-full px-4 py-3 bg-gray-200 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-600 transition-all focus-ring text-sm"
+                  required
+                />
+              </div>
+
+              {/* Password */}
+              <div>
+                <label htmlFor="password" className="block text-sm font-semibold text-gray-900 mb-2">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                  className="w-full px-4 py-3 bg-gray-200 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-600 transition-all focus-ring text-sm"
+                  required
+                />
+              </div>
+
+              {/* Messaggio Errore */}
+              {error && (
+                <div className="p-4 bg-red-900/40 border border-red-600 rounded-lg">
+                  <p className="text-red-300 text-sm font-medium">{error}</p>
+                </div>
+              )}
+
+              {/* Bottone Login */}
+              <button
+                onClick={handleLogin}
+                disabled={loading}
+                type="submit"
+                className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-all duration-200 text-base mt-6 shadow-md hover:shadow-lg"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    Accesso in corso...
+                  </span>
+                ) : (
+                  "Accedi"
+                )}
+              </button>
+            </form>
+          </div>
         </div>
 
-        {/* Campi */}
-        <div className="space-y-4">
-          <div>
-            <label className="text-gray-300 text-sm mb-1 block">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="nome@pizzeria.it"
-              className="w-full bg-gray-700 text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500"
-            />
-          </div>
-
-          <div>
-            <label className="text-gray-300 text-sm mb-1 block">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-              className="w-full bg-gray-700 text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500"
-            />
-          </div>
-
-          {/* Errore */}
-          {error && (
-            <p className="text-red-400 text-sm text-center">{error}</p>
-          )}
-
-          {/* Bottone */}
-          <button
-            onClick={handleLogin}
-            disabled={loading}
-            className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-bold py-3 rounded-xl transition-colors text-lg mt-2"
-          >
-            {loading ? "Accesso in corso..." : "Accedi"}
-          </button>
-        </div>
-
+        {/* Footer Info */}
+        <p className="text-center text-gray-600 text-xs mt-8 font-medium">
+          Sistema gestionale pizzeria • Versione 1.0
+        </p>
       </div>
     </div>
   );
