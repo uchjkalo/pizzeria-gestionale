@@ -135,10 +135,10 @@ function buildChips(order: Order): CheckChip[] {
 }
 
 const chipStyle: Record<CheckChip["type"], string> = {
-  remove:      "bg-red-900/40 border-red-700/40 text-red-200",
-  add:         "bg-gray-800/50 border-gray-600/50 text-gray-200",
-  postcooking: "bg-red-900/30 border-red-700/30 text-red-200",
-  note:        "bg-gray-800/40 border-gray-600/40 text-gray-300",
+  remove:      "bg-red-900/30 border border-red-700/40 text-red-600",
+  add:         "bg-gray-200 border border-gray-400 text-gray-900",
+  postcooking: "bg-red-100 border border-red-300/60 text-red-700",
+  note:        "bg-gray-100 border border-gray-400 text-gray-800",
 };
 const chipIcon: Record<CheckChip["type"], string> = {
   remove: "✗", add: "＋", postcooking: "🍕", note: "📝",
@@ -172,8 +172,8 @@ function AssemblyCard({ order, tagliata, onToggleTagliata, checked, onToggleChec
   const hasModifications = chips.length > 0;
 
   return (
-    <div className={`bg-gray-800 rounded-2xl border-2 p-4 flex flex-col gap-3 transition-all ${
-      order.isUrgent || minutes >= 10 ? "border-red-500" : "border-gray-600"
+    <div className={`bg-gray-100 rounded-2xl border-2 p-4 flex flex-col gap-3 transition-all shadow-sm ${
+      order.isUrgent || minutes >= 10 ? "border-red-500 shadow-md" : "border-gray-400"
     }`}>
 
       {/* ── HEADER ── */}
@@ -197,13 +197,13 @@ function AssemblyCard({ order, tagliata, onToggleTagliata, checked, onToggleChec
               </span>
             )}
           </div>
-          <p className="text-gray-500 text-xs mt-0.5">
+          <p className="text-gray-700 text-xs mt-0.5">
             🕐 {formatTime(order.createdAt)}
-            {order.desiredTime && <span className="text-red-200 ml-2">→ {order.desiredTime}</span>}
+            {order.desiredTime && <span className="text-red-600 ml-2">→ {order.desiredTime}</span>}
           </p>
         </div>
-        <span className={`text-xs font-black px-2.5 py-1.5 rounded-xl shrink-0 tabular-nums ${
-          minutes >= 10 ? "bg-red-600 text-white" : "bg-gray-700 text-gray-200"
+        <span className={`text-xs font-black px-2.5 py-1.5 rounded-xl shrink-0 tabular-nums border ${
+          minutes >= 10 ? "bg-red-600 text-white border-red-500" : "bg-gray-200 text-gray-900 border-gray-400"
         }`}>⏱{minutes}m</span>
       </div>
 
@@ -211,7 +211,7 @@ function AssemblyCard({ order, tagliata, onToggleTagliata, checked, onToggleChec
       {pack.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {pack.map((p, i) => (
-            <span key={i} className="bg-gray-700/80 border border-gray-600/50 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-gray-200 flex items-center gap-1.5">
+            <span key={i} className="bg-gray-200 border border-gray-400 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-gray-900 flex items-center gap-1.5">
               <span>{p.icon}</span>
               <span>{p.count !== undefined && p.count > 1 ? `${p.count}× ` : ""}{p.text}</span>
             </span>
@@ -232,26 +232,26 @@ function AssemblyCard({ order, tagliata, onToggleTagliata, checked, onToggleChec
       )}
 
       {/* ── PRODOTTI (lista compatta) ── */}
-      <div className="bg-gray-900/60 rounded-xl px-3 py-2.5 space-y-1">
+      <div className="bg-gray-50 rounded-xl px-3 py-2.5 space-y-1 border border-gray-300">
         {order.items.map(item => (
           <div key={item.cartId} className="flex items-center gap-2 text-sm">
-            {item.quantity > 1 && <span className="text-red-300 font-bold shrink-0">×{item.quantity}</span>}
-            <span className={item.id === "custom_pizza" ? "text-red-200 font-semibold" : "text-gray-900 font-medium"}>
+            {item.quantity > 1 && <span className="text-red-600 font-bold shrink-0">×{item.quantity}</span>}
+            <span className={item.id === "custom_pizza" ? "text-red-600 font-semibold" : "text-gray-900 font-medium"}>
               {item.name}
             </span>
             {item.size !== "normale" && (
-              <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
-                item.size === "maxi" ? "bg-red-900/40 text-red-200" : "bg-gray-700/60 text-gray-200"
+              <span className={`text-[10px] font-black px-1.5 py-0.5 rounded border ${
+                item.size === "maxi" ? "bg-red-100 border-red-300 text-red-700" : "bg-gray-200 border-gray-400 text-gray-900"
               }`}>{item.size.toUpperCase()}</span>
             )}
             {item.isHalf && item.halfPizza1 && item.halfPizza2 && (
-              <span className="text-red-200 text-xs">½+½</span>
+              <span className="text-red-600 text-xs font-semibold">½+½</span>
             )}
           </div>
         ))}
         {order.extras?.map((e, i) => (
-          <div key={i} className="flex items-center gap-2 text-sm text-red-200">
-            <span className="text-red-300 shrink-0 text-xs">➕</span>
+          <div key={i} className="flex items-center gap-2 text-sm text-red-600">
+            <span className="text-red-700 shrink-0 text-xs font-bold">➕</span>
             <span>{e.description}</span>
           </div>
         ))}
@@ -262,7 +262,7 @@ function AssemblyCard({ order, tagliata, onToggleTagliata, checked, onToggleChec
         <div className="space-y-2">
           {Object.entries(grouped).map(([prodName, prodChips]) => (
             <div key={prodName}>
-              <p className="text-gray-700 text-[10px] font-bold uppercase tracking-widest mb-1.5">
+              <p className="text-gray-800 text-[10px] font-bold uppercase tracking-widest mb-1.5">
                 {prodName}
               </p>
               <div className="flex flex-wrap gap-1.5">
@@ -274,7 +274,7 @@ function AssemblyCard({ order, tagliata, onToggleTagliata, checked, onToggleChec
                       onClick={() => onToggleCheck(chip.key)}
                       className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-semibold transition-all active:scale-95 ${
                         done
-                          ? "bg-gray-800/40 border-gray-700/30 text-gray-600 line-through opacity-50"
+                          ? "bg-gray-200 border-gray-400 text-gray-500 line-through opacity-60"
                           : chipStyle[chip.type]
                       }`}>
                       <span className="font-bold">{done ? "✓" : chipIcon[chip.type]}</span>
@@ -312,10 +312,10 @@ function AssemblyCard({ order, tagliata, onToggleTagliata, checked, onToggleChec
       <button
         onClick={onDeliver}
         disabled={hasModifications && !allDone}
-        className={`w-full font-bold py-3.5 rounded-2xl text-sm transition-all active:scale-[0.98] ${
+        className={`w-full font-bold py-3.5 rounded-2xl text-sm transition-all active:scale-[0.98] border ${
           !hasModifications || allDone
-            ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-[0_4px_16px_rgba(194,38,46,0.35)]"
-            : "bg-gray-700 text-gray-500 cursor-not-allowed"
+            ? "bg-gradient-to-r from-red-600 to-red-500 text-white border-red-500 shadow-md hover:shadow-lg"
+            : "bg-gray-200 text-gray-500 border-gray-400 cursor-not-allowed opacity-60"
         }`}>
         {hasModifications && !allDone
           ? `⏳ Completa modifiche prima`
@@ -478,14 +478,14 @@ export default function RifinituraZone() {
       {/* Mobile tabs */}
       <div className="md:hidden flex gap-2 shrink-0">
         <button onClick={() => setMobileTab("pronti")}
-          className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-colors relative ${mobileTab === "pronti" ? "bg-red-600 text-white" : "bg-gray-800 text-gray-500 border border-gray-700"}`}>
+          className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-colors relative border ${mobileTab === "pronti" ? "bg-red-600 text-white border-red-500" : "bg-gray-200 text-gray-900 border-gray-400"}`}>
           🔧 Da rifinire
           {inRifinitura.length > 0 && (
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">{inRifinitura.length}</span>
           )}
         </button>
         <button onClick={() => setMobileTab("conclusi")}
-          className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-colors ${mobileTab === "conclusi" ? "bg-red-700 text-white" : "bg-gray-800 text-gray-500 border border-gray-700"}`}>
+          className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-colors border ${mobileTab === "conclusi" ? "bg-red-700 text-white border-red-600" : "bg-gray-200 text-gray-900 border-gray-400"}`}>
           ✅ Conclusi ({conclusi.length})
         </button>
       </div>
@@ -498,7 +498,7 @@ export default function RifinituraZone() {
       {/* Desktop 2-col */}
       <div className="hidden md:flex gap-4 flex-1 overflow-hidden">
         <div className="flex-1 flex flex-col overflow-hidden">
-          <h2 className="text-red-200 font-bold text-sm shrink-0 bg-red-900/20 border border-red-700/30 rounded-lg px-3 py-2 mb-3">
+          <h2 className="text-red-700 font-bold text-sm shrink-0 bg-red-100 border border-red-300 rounded-lg px-3 py-2 mb-3">
             🔧 Da rifinire ({inRifinitura.length})
           </h2>
           <div className="flex-1 overflow-y-auto">
@@ -506,7 +506,7 @@ export default function RifinituraZone() {
           </div>
         </div>
         <div className="w-72 flex flex-col overflow-hidden">
-          <h2 className="text-red-200 font-bold text-sm shrink-0 bg-red-900/20 border border-red-700/30 rounded-lg px-3 py-2 mb-3">
+          <h2 className="text-red-700 font-bold text-sm shrink-0 bg-red-100 border border-red-300 rounded-lg px-3 py-2 mb-3">
             ✅ Conclusi ({conclusi.length})
           </h2>
           <div className="flex-1 overflow-y-auto">
