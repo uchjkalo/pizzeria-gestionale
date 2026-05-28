@@ -13,12 +13,7 @@ import { menu } from "@/lib/menu";
 
 const formatTime = (d: Date) => d.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
 const minutesSince = (d: Date) => Math.floor((Date.now() - d.getTime()) / 60000);
-const formatTime = (d: Date) => d.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
-const minutesSince = (d: Date) => Math.floor((Date.now() - d.getTime()) / 60000);
 const orderLabel = (o: Order) =>
-  o.type === "tavolo" ? `🪑 Tavolo ${o.tableNumber} (${o.peopleCount} pers.)`
-  : o.type === "asporto" ? `🥡 ${o.customerName || "Asporto"}`
-  : `🚴 ${o.customerName || o.deliveryAddress || "Delivery"}`;
   o.type === "tavolo" ? `🪑 Tavolo ${o.tableNumber} (${o.peopleCount} pers.)`
   : o.type === "asporto" ? `🥡 ${o.customerName || "Asporto"}`
   : `🚴 ${o.customerName || o.deliveryAddress || "Delivery"}`;
@@ -30,16 +25,9 @@ const POST_COOKING = new Set([
   "olio al tartufo","maionese","prezzemolo","mortadella","panna","kren",
   "prosciutto cotto","speck","pitina","porchetta","pancetta croccante","guanciale romano",
   "wurstel","nduja calabrese","nduja","salsiccia locale","salsiccia","friarielli",
-  "prosciutto crudo san daniele","prosciutto san daniele","prosciutto crudo",
-  "rucola","grana padano","pomodorini","bufala","mozzarella di bufala",
-  "burrata","granella di pistacchio","semi di papavero","pesto","pomodori secchi",
-  "olio al tartufo","maionese","prezzemolo","mortadella","panna","kren",
-  "prosciutto cotto","speck","pitina","porchetta","pancetta croccante","guanciale romano",
-  "wurstel","nduja calabrese","nduja","salsiccia locale","salsiccia","friarielli",
 ]);
 const isPostCooking = (ing: string) => POST_COOKING.has(ing.toLowerCase().trim());
 
-interface CheckItem { key: string; label: string; type: "remove"|"add"|"note"|"finish" }
 interface CheckItem { key: string; label: string; type: "remove"|"add"|"note"|"finish" }
 
 const buildChecklist = (item: OrderItem): CheckItem[] => {
@@ -48,13 +36,9 @@ const buildChecklist = (item: OrderItem): CheckItem[] => {
   item.removedIngredients.forEach(ing => list.push({ key: `r_${ing}`, label: `Verificare assenza: ${ing}`, type: "remove" }));
   item.addedIngredients.forEach(ing  => list.push({ key: `a_${ing.name}`, label: `Aggiungere: ${ing.name}`, type: "add" }));
   if (item.notes) list.push({ key: "note", label: `Nota: ${item.notes}`, type: "note" });
-  item.removedIngredients.forEach(ing => list.push({ key: `r_${ing}`, label: `Verificare assenza: ${ing}`, type: "remove" }));
-  item.addedIngredients.forEach(ing  => list.push({ key: `a_${ing.name}`, label: `Aggiungere: ${ing.name}`, type: "add" }));
-  if (item.notes) list.push({ key: "note", label: `Nota: ${item.notes}`, type: "note" });
   if (menuItem) {
     menuItem.ingredients
       .filter(ing => !item.removedIngredients.includes(ing) && isPostCooking(ing))
-      .forEach(ing => list.push({ key: `f_${ing}`, label: `Post-cottura: ${ing}`, type: "finish" }));
       .forEach(ing => list.push({ key: `f_${ing}`, label: `Post-cottura: ${ing}`, type: "finish" }));
   }
   return list;
@@ -64,13 +48,9 @@ const checkColor: Record<CheckItem["type"], string> = {
   remove: "text-red-300", add: "text-green-300", note: "text-red-300", finish: "text-blue-300",
 };
 const checkIcon: Record<CheckItem["type"], string> = { remove: "🚫", add: "➕", note: "📝", finish: "🍕" };
-const checkIcon: Record<CheckItem["type"], string> = { remove: "🚫", add: "➕", note: "📝", finish: "🍕" };
 
-export default function RifinituraZone() {
+export default function PreparazioneZone() {
   const { loading } = useAuth();
-  const [orders, setOrders]   = useState<Order[]>([]);
-  const [now, setNow]         = useState(new Date());
-  const [mobileTab, setMobileTab] = useState<"pronti"|"conclusi">("pronti");
   const [orders, setOrders]   = useState<Order[]>([]);
   const [now, setNow]         = useState(new Date());
   const [mobileTab, setMobileTab] = useState<"pronti"|"conclusi">("pronti");
@@ -79,21 +59,14 @@ export default function RifinituraZone() {
 
   const audioRef = useRef<AudioContext | null>(null);
   const prevPronto = useRef(0);
-  const audioRef = useRef<AudioContext | null>(null);
-  const prevPronto = useRef(0);
   const playBeep = () => {
     try {
       if (!audioRef.current) audioRef.current = new AudioContext();
       const ctx = audioRef.current, o = ctx.createOscillator(), g = ctx.createGain();
       o.connect(g); g.connect(ctx.destination);
       o.frequency.setValueAtTime(660, ctx.currentTime);
-      if (!audioRef.current) audioRef.current = new AudioContext();
-      const ctx = audioRef.current, o = ctx.createOscillator(), g = ctx.createGain();
-      o.connect(g); g.connect(ctx.destination);
-      o.frequency.setValueAtTime(660, ctx.currentTime);
       g.gain.setValueAtTime(0.3, ctx.currentTime);
       g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-      o.start(); o.stop(ctx.currentTime + 0.3);
       o.start(); o.stop(ctx.currentTime + 0.3);
     } catch {}
   };
@@ -108,7 +81,6 @@ export default function RifinituraZone() {
   }, []);
 
   useEffect(() => { const t = setInterval(() => setNow(new Date()), 30000); return () => clearInterval(t); }, []);
-  useEffect(() => { const t = setInterval(() => setNow(new Date()), 30000); return () => clearInterval(t); }, []);
 
   const toggleCheck = (orderId: string, key: string) => {
     setChecked(prev => {
@@ -117,8 +89,6 @@ export default function RifinituraZone() {
       return { ...prev, [orderId]: s };
     });
   };
-  const isChecked = (orderId: string, key: string) => checked[orderId]?.has(key) ?? false;
-  const toggleExpanded = (id: string) => setExpanded(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
   const isChecked = (orderId: string, key: string) => checked[orderId]?.has(key) ?? false;
   const toggleExpanded = (id: string) => setExpanded(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
 
@@ -302,4 +272,3 @@ export default function RifinituraZone() {
     </div>
   );
 }
-
