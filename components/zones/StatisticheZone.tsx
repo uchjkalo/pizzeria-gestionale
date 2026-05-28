@@ -17,19 +17,24 @@ interface PaidOrder extends Order {
 export default function StatisticheZone() {
   const { loading } = useAuth();
   const [orders, setOrders]       = useState<PaidOrder[]>([]);
+  const [orders, setOrders]       = useState<PaidOrder[]>([]);
   const [showFelice, setShowFelice] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
   useEffect(() => {
     return subscribeToPaidToday(raw => setOrders(raw as PaidOrder[]));
+    return subscribeToPaidToday(raw => setOrders(raw as PaidOrder[]));
   }, []);
 
   const handleResetStats = async () => {
+    if (!window.confirm("Azzerare le statistiche di oggi?")) return;
     if (!window.confirm("Azzerare le statistiche di oggi?")) return;
     try {
       setIsResetting(true);
       const removed = await resetPaidTodayStats();
       window.alert(`Statistiche azzerate. Ordini rimossi: ${removed}`);
+    } catch { window.alert("Errore durante l'azzeramento."); }
+    finally { setIsResetting(false); }
     } catch { window.alert("Errore durante l'azzeramento."); }
     finally { setIsResetting(false); }
   };
@@ -50,12 +55,15 @@ export default function StatisticheZone() {
   orders.forEach(order => {
     order.items.forEach(item => {
       if (!productCount[item.id]) productCount[item.id] = { name: item.name, qty: 0, revenue: 0 };
+      if (!productCount[item.id]) productCount[item.id] = { name: item.name, qty: 0, revenue: 0 };
       productCount[item.id].qty     += item.quantity;
       productCount[item.id].revenue += item.effectivePrice * item.quantity;
     });
   });
   const topProducts = Object.values(productCount).sort((a, b) => b.qty - a.qty).slice(0, 10);
+  const topProducts = Object.values(productCount).sort((a, b) => b.qty - a.qty).slice(0, 10);
 
+  // Ordini per ora — solo dalle 8 alle 23
   // Ordini per ora — solo dalle 8 alle 23
   const byHour: Record<number, number> = {};
   orders.forEach(o => {
@@ -64,16 +72,21 @@ export default function StatisticheZone() {
   });
   const HOURS = Array.from({ length: 16 }, (_, i) => i + 8); // 8 → 23
   const maxByHour = Math.max(...HOURS.map(h => byHour[h] ?? 0), 1);
+  const HOURS = Array.from({ length: 16 }, (_, i) => i + 8); // 8 → 23
+  const maxByHour = Math.max(...HOURS.map(h => byHour[h] ?? 0), 1);
 
   return (
+    <div className="h-[calc(100vh-80px)] overflow-y-auto space-y-5 pr-0.5">
     <div className="h-[calc(100vh-80px)] overflow-y-auto space-y-5 pr-0.5">
 
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h1 className="text-white text-2xl font-bold">📊 Statistiche</h1>
-          <p className="text-gray-400 text-sm mt-0.5">
+          <p className="text-gray-500 text-sm mt-0.5">
             {new Date().toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" })}
+            {" — "}{orders.length} ordini
             {" — "}{orders.length} ordini
           </p>
         </div>
@@ -105,6 +118,7 @@ export default function StatisticheZone() {
       </div>
 
       {/* Pannello felice — nascosto */}
+      {/* Pannello felice — nascosto */}
       {showFelice && (
         <div className="bg-gray-100 rounded-2xl border border-gray-300 p-4 space-y-3 shadow-sm">
           <h2 className="text-gray-900 font-bold text-sm">😊 Dettaglio</h2>
@@ -135,6 +149,8 @@ export default function StatisticheZone() {
         </div>
       )}
 
+      {/* Tipo ordini */}
+      <div className="grid grid-cols-3 gap-3">
       {/* Tipo ordini */}
       <div className="grid grid-cols-3 gap-3">
         {[
@@ -229,3 +245,4 @@ export default function StatisticheZone() {
     </div>
   );
 }
+

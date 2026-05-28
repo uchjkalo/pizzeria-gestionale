@@ -4,14 +4,19 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { subscribeToActiveOrders, updateOrderStatus, cancelOrder } from "@/lib/orders";
 import { subscribeToTasks, subscribeToAllTasks, createKitchenTask, completeTask, deleteTask, updateTaskDescription } from "@/lib/kitchen";
+import { subscribeToActiveOrders, updateOrderStatus, cancelOrder } from "@/lib/orders";
+import { subscribeToTasks, subscribeToAllTasks, createKitchenTask, completeTask, deleteTask, updateTaskDescription } from "@/lib/kitchen";
 import { Order, KitchenTask } from "@/types";
+import { menu } from "@/lib/menu";
 import { menu } from "@/lib/menu";
 
 interface Props { zone: "cucina" | "fritture" }
 
 const CUCINA_CATS   = ["pizze", "panini", "burger", "specialita"];
+const CUCINA_CATS   = ["pizze", "panini", "burger", "specialita"];
 const FRITTURE_CATS = ["fritti"];
 
+const formatTime   = (d: Date) => d.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
 const formatTime   = (d: Date) => d.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
 const minutesSince = (d: Date) => Math.floor((Date.now() - d.getTime()) / 60000);
 
@@ -83,12 +88,25 @@ export default function KitchenZone({ zone }: Props) {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const audioRef  = useRef<AudioContext | null>(null);
+  const [orders, setOrders]          = useState<Order[]>([]);
+  const [tasks, setTasks]            = useState<KitchenTask[]>([]);
+  const [allTasks, setAllTasks]      = useState<KitchenTask[]>([]);
+  const [showAllTasks, setShowAll]   = useState(false);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editingText, setEditingText]     = useState("");
+  const [newTask, setNewTask]        = useState("");
+  const [now, setNow]                = useState(new Date());
+  const [mobileTab, setMobileTab]    = useState<"ordini" | "task">("ordini");
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
+  const audioRef  = useRef<AudioContext | null>(null);
   const prevCount = useRef(0);
 
   const playBeep = () => {
     try {
       if (!audioRef.current) audioRef.current = new AudioContext();
       const ctx = audioRef.current;
+      const o = ctx.createOscillator(), g = ctx.createGain();
       const o = ctx.createOscillator(), g = ctx.createGain();
       o.connect(g); g.connect(ctx.destination);
       o.frequency.setValueAtTime(880, ctx.currentTime);
@@ -101,7 +119,9 @@ export default function KitchenZone({ zone }: Props) {
 
   useEffect(() => {
     const cats = zone === "cucina" ? CUCINA_CATS : FRITTURE_CATS;
+    const cats = zone === "cucina" ? CUCINA_CATS : FRITTURE_CATS;
     return subscribeToActiveOrders(all => {
+      const rel = all.filter(o => o.items.some(i => cats.includes(i.category)) && o.status !== "consegnato");
       const rel = all.filter(o => o.items.some(i => cats.includes(i.category)) && o.status !== "consegnato");
       if (rel.length > prevCount.current) playBeep();
       prevCount.current = rel.length;
@@ -110,6 +130,7 @@ export default function KitchenZone({ zone }: Props) {
   }, [zone]);
 
   useEffect(() => subscribeToTasks(zone, setTasks), [zone]);
+  useEffect(() => subscribeToAllTasks(zone, setAllTasks), [zone]);
   useEffect(() => subscribeToAllTasks(zone, setAllTasks), [zone]);
   useEffect(() => { const t = setInterval(() => setNow(new Date()), 30000); return () => clearInterval(t); }, []);
 
@@ -145,10 +166,14 @@ export default function KitchenZone({ zone }: Props) {
   const autoTasksFromOrder = (order: Order): string[] => {
     return order.items.filter(i => cats.includes(i.category)).flatMap(i => {
       const sz  = i.size !== "normale" ? ` [${i.size.toUpperCase()}]` : "";
+      const sz  = i.size !== "normale" ? ` [${i.size.toUpperCase()}]` : "";
       const qty = i.quantity > 1 ? ` ×${i.quantity}` : "";
+      const lines: string[] = [`${i.name}${sz}${qty}`];
       const lines: string[] = [`${i.name}${sz}${qty}`];
       if (i.removedIngredients.length > 0) lines.push(`  ✗ SENZA: ${i.removedIngredients.join(", ")}`);
       if (i.addedIngredients.length > 0)   lines.push(`  ➕ AGGIUNGI: ${i.addedIngredients.map(x => x.name).join(", ")}`);
+      if (i.manualAdditions?.length > 0)   lines.push(`  ✏️ EXTRA: ${i.manualAdditions.map(m => m.name).join(", ")}`);
+      if (i.notes) lines.push(`  📝 ${i.notes}`);
       if (i.manualAdditions?.length > 0)   lines.push(`  ✏️ EXTRA: ${i.manualAdditions.map(m => m.name).join(", ")}`);
       if (i.notes) lines.push(`  📝 ${i.notes}`);
       return lines;
@@ -418,3 +443,4 @@ export default function KitchenZone({ zone }: Props) {
     </div>
   );
 }
+

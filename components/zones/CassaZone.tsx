@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { subscribeToOrdersToday, payOrder, updateOrder, revertPayment, cancelOrder } from "@/lib/orders";
 import { Order, OrderItem } from "@/types";
+import { subscribeToOrdersToday, payOrder, updateOrder, revertPayment, cancelOrder } from "@/lib/orders";
+import { Order, OrderItem } from "@/types";
 
 const formatTime = (date: Date) =>
   date.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
@@ -107,8 +109,46 @@ interface PayModalProps {
   initialQuickExtras: QuickExtra[];
   onConfirm: (method: "contanti" | "carta", felice: boolean, extras: QuickExtra[]) => void;
   onClose: (currentExtras: QuickExtra[]) => void;  // salva lo stato anche se non si conferma
+  initialQuickExtras: QuickExtra[];
+  onConfirm: (method: "contanti" | "carta", felice: boolean, extras: QuickExtra[]) => void;
+  onClose: (currentExtras: QuickExtra[]) => void;  // salva lo stato anche se non si conferma
 }
 
+function PayModal({ order, initialQuickExtras, onConfirm, onClose }: PayModalProps) {
+  const [method, setMethod]       = useState<"contanti" | "carta">("contanti");
+  const [felice, setFelice]       = useState(true);
+  const [cash, setCash]           = useState("");
+  const [quickExtras, setQuickExtras] = useState<QuickExtra[]>(initialQuickExtras);
+  // prezzi custom per i quick item predefiniti
+  const [customPrices, setCustomPrices] = useState<Record<string, string>>({});
+  // aggiunta personalizzata (solo prezzo)
+  const [customPrice, setCustomPrice]   = useState("");
+  const [customLabel, setCustomLabel]   = useState("");
+  // view: "riepilogo" | "aggiunte" | "pagamento"
+  const [view, setView] = useState<"riepilogo" | "aggiunte" | "pagamento">("riepilogo");
+
+  const uid = () => Math.random().toString(36).slice(2, 9);
+
+  const addQuickItem = (item: typeof QUICK_ITEMS[0]) => {
+    const price = parseFloat(customPrices[item.label] ?? String(item.price));
+    if (isNaN(price) || price <= 0) return;
+    setQuickExtras(prev => [...prev, { id: uid(), label: `${item.emoji} ${item.label}`, price }]);
+  };
+
+  const addCustom = () => {
+    const price = parseFloat(customPrice);
+    if (isNaN(price) || price <= 0) return;
+    setQuickExtras(prev => [...prev, { id: uid(), label: customLabel.trim() || "➕ Extra", price }]);
+    setCustomPrice(""); setCustomLabel("");
+  };
+
+  const removeQuickExtra = (id: string) =>
+    setQuickExtras(prev => prev.filter(e => e.id !== id));
+
+  const receiptLines = buildReceiptLines(order, quickExtras);
+  const grandTotal   = receiptLines.reduce((s, l) => s + l.price, 0);
+  const change       = cash ? Math.max(0, parseFloat(cash) - grandTotal) : null;
+  const postOrderCount = quickExtras.length;
 function PayModal({ order, initialQuickExtras, onConfirm, onClose }: PayModalProps) {
   const [method, setMethod]       = useState<"contanti" | "carta">("contanti");
   const [felice, setFelice]       = useState(true);
@@ -422,7 +462,22 @@ function PayModal({ order, initialQuickExtras, onConfirm, onClose }: PayModalPro
 /* ─────────────────────────────────────────
    CASSA ZONE
 ───────────────────────────────────────── */
+/* ─────────────────────────────────────────
+   CASSA ZONE
+───────────────────────────────────────── */
 export default function CassaZone() {
+  const { loading }                         = useAuth();
+  const [orders, setOrders]                 = useState<Order[]>([]);
+  const [payingOrderId, setPayingOrderId]   = useState<string | null>(null);
+  const [tab, setTab]                       = useState<"daPagare" | "pagati">("daPagare");
+  const [confirmDelete, setConfirmDelete]   = useState<string | null>(null);
+  const [confirmRevert, setConfirmRevert]   = useState<string | null>(null);
+  // Persistenza aggiunte rapide per ordine: { [orderId]: QuickExtra[] }
+  const [savedExtras, setSavedExtras]       = useState<Record<string, QuickExtra[]>>({});
+
+  useEffect(() => { return subscribeToOrdersToday(setOrders); }, []);
+
+  const payingOrder = orders.find(o => o.id === payingOrderId) ?? null;
   const { loading }                         = useAuth();
   const [orders, setOrders]                 = useState<Order[]>([]);
   const [payingOrderId, setPayingOrderId]   = useState<string | null>(null);
@@ -437,7 +492,15 @@ export default function CassaZone() {
   const payingOrder = orders.find(o => o.id === payingOrderId) ?? null;
 
   const handlePay = async (method: "contanti" | "carta", felice: boolean, extras: QuickExtra[]) => {
+  const handlePay = async (method: "contanti" | "carta", felice: boolean, extras: QuickExtra[]) => {
     if (!payingOrder) return;
+    if (extras.length > 0) {
+      const extraTotal = extras.reduce((s, e) => s + e.price, 0);
+      await updateOrder(payingOrder.id, {
+        extras: [...(payingOrder.extras ?? []), ...extras.map(e => ({ description: e.label, price: e.price }))],
+        total:  payingOrder.total + extraTotal,
+      });
+    }
     if (extras.length > 0) {
       const extraTotal = extras.reduce((s, e) => s + e.price, 0);
       await updateOrder(payingOrder.id, {
@@ -449,7 +512,19 @@ export default function CassaZone() {
     // Pulisce le aggiunte salvate dopo il pagamento
     setSavedExtras(prev => { const n = { ...prev }; delete n[payingOrder.id]; return n; });
     setPayingOrderId(null);
+    // Pulisce le aggiunte salvate dopo il pagamento
+    setSavedExtras(prev => { const n = { ...prev }; delete n[payingOrder.id]; return n; });
+    setPayingOrderId(null);
   };
+
+  const handleModalClose = (orderId: string, currentExtras: QuickExtra[]) => {
+    // Salva le aggiunte anche se non si conferma il pagamento
+    setSavedExtras(prev => ({ ...prev, [orderId]: currentExtras }));
+    setPayingOrderId(null);
+  };
+
+  const handleRevertPayment = async (orderId: string) => { await revertPayment(orderId); setConfirmRevert(null); };
+  const handleCancelOrder   = async (orderId: string) => { await cancelOrder(orderId); setConfirmDelete(null); };
 
   const handleModalClose = (orderId: string, currentExtras: QuickExtra[]) => {
     // Salva le aggiunte anche se non si conferma il pagamento
@@ -468,6 +543,7 @@ export default function CassaZone() {
   const totaleIncassato = pagati.reduce((s, o) => s + o.total, 0);
 
   if (loading) return <div className="flex items-center justify-center h-full"><p className="text-white">Caricamento...</p></div>;
+  if (loading) return <div className="flex items-center justify-center h-full"><p className="text-white">Caricamento...</p></div>;
 
   return (
     <>
@@ -478,10 +554,18 @@ export default function CassaZone() {
           onConfirm={handlePay}
           onClose={(extras) => handleModalClose(payingOrder.id, extras)}
         />
+        <PayModal
+          order={payingOrder}
+          initialQuickExtras={savedExtras[payingOrder.id] ?? []}
+          onConfirm={handlePay}
+          onClose={(extras) => handleModalClose(payingOrder.id, extras)}
+        />
       )}
 
       <div className="h-[calc(100vh-80px)] flex flex-col gap-3 overflow-hidden">
+      <div className="h-[calc(100vh-80px)] flex flex-col gap-3 overflow-hidden">
 
+        {/* Header */}
         {/* Header */}
         <div className="flex items-center justify-between shrink-0 flex-wrap gap-3">
           <h1 className="text-white text-xl font-bold">💳 Cassa</h1>
@@ -512,14 +596,24 @@ export default function CassaZone() {
         </div>
 
         {/* Lista */}
+        {/* Lista */}
         {displayed.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-gray-500">
+          <div className="flex-1 flex flex-col items-center justify-center text-gray-600">
             <p className="text-5xl mb-3">{tab === "daPagare" ? "🎉" : "📋"}</p>
+            <p className="font-medium">{tab === "daPagare" ? "Nessun ordine da pagare!" : "Nessun ordine pagato oggi"}</p>
             <p className="font-medium">{tab === "daPagare" ? "Nessun ordine da pagare!" : "Nessun ordine pagato oggi"}</p>
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 content-start pb-4">
+          <div className="flex-1 overflow-y-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 content-start pb-4">
             {displayed.map(order => {
+              const st          = statusLabel(order.status);
+              const isDeleting  = confirmDelete === order.id;
+              const isReverting = confirmRevert === order.id;
+              const hasSavedExtras = (savedExtras[order.id]?.length ?? 0) > 0;
+              const cardLines   = buildReceiptLines(order, savedExtras[order.id] ?? []);
+              const cardTotal   = cardLines.reduce((s, l) => s + l.price, 0);
+
               const st          = statusLabel(order.status);
               const isDeleting  = confirmDelete === order.id;
               const isReverting = confirmRevert === order.id;
@@ -639,3 +733,4 @@ export default function CassaZone() {
     </>
   );
 }
+
