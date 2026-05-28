@@ -11,7 +11,7 @@ export interface OrderItem {
   size: ItemSize; basePrice: number; effectivePrice: number; quantity: number;
   removedIngredients: string[]; addedIngredients: { name: string; price: number }[];
   manualAdditions: ManualAddition[]; notes: string;
-  customName?: string; isHalf?: boolean;
+  customName?: string; isHalf?: boolean; isTagliato?: boolean;
   halfPizza1?: { id: string; name: string; price: number };
   halfPizza2?: { id: string; name: string; price: number };
 }

@@ -35,6 +35,7 @@ function SearchBar({ value, onChange, mobile }: { value: string; onChange: (v: s
     <div className="relative">
       <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-sm">🔍</span>
       <input type="text" value={value} onChange={e => onChange(e.target.value)}
+        onFocus={e => { if (value) { onChange(""); e.target.value = ""; } }}
         placeholder={mobile ? "Cerca prodotto..." : "Cerca prodotto o ingrediente..."}
         className={`w-full bg-white text-gray-900 rounded-2xl pl-10 pr-10 outline-none ring-1 ring-gray-300 focus:ring-2 focus:ring-orange-500 transition-all placeholder:text-gray-500 ${mobile ? "py-3.5 text-base" : "py-2.5 text-sm"}`}
       />
@@ -121,14 +122,14 @@ function MenuCard({ item, totalQty, directQty, onPrimary, onDirectAdd, onDirectR
   return (
     <div className="relative">
       <button onClick={onPrimary}
-        className={`w-full border rounded-2xl p-3 text-left transition-all duration-150 group ${
+        className={`w-full border rounded-2xl p-3 text-left transition-all duration-150 group h-40 flex flex-col ${
           isCustom
             ? inCart ? "bg-purple-100 border-purple-300" : "bg-white border-purple-200 hover:border-purple-300"
-            : inCart ? "bg-orange-50 border-orange-300 shadow-[0_0_16px_rgba(249,115,22,0.08)]"
-                     : "bg-gray-100 border-gray-300 hover:border-gray-400"
+            : inCart ? "bg-red-50 border-red-300 shadow-[0_0_16px_rgba(220,38,38,0.08)]"
+                     : "bg-gray-100 border-red-200 hover:border-red-300"
         }`}>
         {inCart && (
-          <span className={`absolute -top-2 -right-2 z-10 w-6 h-6 rounded-full text-[11px] font-black text-white flex items-center justify-center shadow-lg ${isCustom ? "bg-purple-500" : "bg-orange-500"}`}>
+          <span className={`absolute -top-2 -right-2 z-10 w-6 h-6 rounded-full text-[11px] font-black text-white flex items-center justify-center shadow-lg ${isCustom ? "bg-purple-500" : "bg-red-600"}`}>
             {totalQty}
           </span>
         )}
@@ -144,12 +145,12 @@ function MenuCard({ item, totalQty, directQty, onPrimary, onDirectAdd, onDirectR
         {item.ingredients.length > 0 && !isCustom && (
           <p className="hidden xl:block text-[10px] text-gray-700 mb-1.5 line-clamp-2">{item.ingredients.join(", ")}</p>
         )}
-        <div className="flex items-baseline gap-2 mt-1">
-          <span className={`font-black text-base tabular-nums ${isCustom ? "text-purple-600" : "text-orange-600"}`}>€{item.price.toFixed(2)}</span>
+        <div className="flex items-baseline gap-2 mt-auto">
+          <span className={`font-black text-base tabular-nums ${isCustom ? "text-purple-600" : "text-red-700"}`}>€{item.price.toFixed(2)}</span>
           {item.maxiPrice && <span className="text-[9px] text-amber-700 font-bold">MAXI €{item.maxiPrice}</span>}
         </div>
         {!isDirect && <p className={`text-[10px] mt-1 ${isCustom ? "text-purple-700" : "text-gray-700"}`}>✏️ personalizza</p>}
-        {isDirect && directQty > 0 && <div className="h-9 mt-1" />}
+        {isDirect && directQty > 0 && <div className="h-9" />}
       </button>
       {isDirect && directQty > 0 && (
         <div className="absolute bottom-3 right-3 flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
