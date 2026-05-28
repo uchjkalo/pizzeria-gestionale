@@ -129,8 +129,8 @@ function MenuCard({ item, totalQty, directQty, onPrimary, onDirectAdd, onDirectR
         className={`w-full border rounded-2xl p-3 text-left transition-all duration-150 group h-40 flex flex-col ${
           isCustom
             ? inCart ? "bg-purple-100 border-purple-300" : "bg-white border-purple-200 hover:border-purple-300"
-            : inCart ? "bg-red-50 border-red-300 shadow-[0_0_16px_rgba(220,38,38,0.08)]"
-                     : "bg-gray-100 border-red-200 hover:border-red-300"
+            : inCart ? "bg-red-600 border-red-700 text-white shadow-lg shadow-red-600/40 hover:bg-red-700"
+                     : "bg-red-500 border-red-600 hover:border-red-700 hover:bg-red-600 text-white"
         }`}>
         {inCart && (
           <span className={`absolute -top-2 -right-2 z-10 w-6 h-6 rounded-full text-[11px] font-black text-white flex items-center justify-center shadow-lg ${isCustom ? "bg-purple-500" : "bg-red-600"}`}>
@@ -138,22 +138,22 @@ function MenuCard({ item, totalQty, directQty, onPrimary, onDirectAdd, onDirectR
           </span>
         )}
         <div className="flex items-start justify-between gap-1 mb-1">
-          <p className={`font-bold text-sm leading-tight flex-1 ${isCustom ? "text-purple-700" : "text-gray-900"}`}>{item.name}</p>
+          <p className={`font-bold text-sm leading-tight flex-1 ${isCustom ? "text-purple-700" : inCart ? "text-white" : "text-white"}`}>{item.name}</p>
           <div className="flex items-center gap-1 shrink-0">
           {item.tag === "vegetariano" && <span className="text-[10px]">🌿</span>}
           {item.tag === "vegano" && <span className="text-[10px]">🥦</span>}
           {item.glutenFree && !glutenFreeMode && <span className="text-[9px] text-red-600 font-bold">GF</span>}
         </div>
         </div>
-        {item.note && <span className="inline-block text-[9px] uppercase tracking-wider text-gray-600 font-bold mb-1.5 bg-gray-200 px-1.5 py-0.5 rounded-full">{item.note}</span>}
+        {item.note && <span className={`inline-block text-[9px] uppercase tracking-wider font-bold mb-1.5 px-1.5 py-0.5 rounded-full ${isCustom ? "text-gray-600 bg-gray-200" : inCart ? "text-red-100 bg-red-700/60" : "text-red-700 bg-red-100"}`}>{item.note}</span>}
         {item.ingredients.length > 0 && !isCustom && (
-          <p className="hidden xl:block text-[10px] text-gray-700 mb-1.5 line-clamp-2">{item.ingredients.join(", ")}</p>
+          <p className={`hidden xl:block text-[10px] mb-1.5 line-clamp-2 ${isCustom ? "text-gray-700" : inCart ? "text-red-100" : "text-red-700"}`}>{item.ingredients.join(", ")}</p>
         )}
         <div className="flex items-baseline gap-2 mt-auto">
-          <span className={`font-black text-base tabular-nums ${isCustom ? "text-purple-600" : "text-red-700"}`}>€{item.price.toFixed(2)}</span>
-          {item.maxiPrice && <span className="text-[9px] text-amber-700 font-bold">MAXI €{item.maxiPrice}</span>}
+          <span className={`font-black text-base tabular-nums ${isCustom ? "text-purple-600" : inCart ? "text-white" : "text-white"}`}>€{item.price.toFixed(2)}</span>
+          {item.maxiPrice && <span className={`text-[9px] font-bold ${isCustom ? "text-amber-700" : inCart ? "text-red-100" : "text-red-700"}`}>MAXI €{item.maxiPrice}</span>}
         </div>
-        {!isDirect && <p className={`text-[10px] mt-1 ${isCustom ? "text-purple-700" : "text-gray-700"}`}>✏️ personalizza</p>}
+        {!isDirect && <p className={`text-[10px] mt-1 ${isCustom ? "text-purple-700" : inCart ? "text-red-100" : "text-red-700"}`}>✏️ personalizza</p>}
         {isDirect && directQty > 0 && <div className="h-9" />}
       </button>
       {isDirect && directQty > 0 && (
@@ -174,12 +174,12 @@ interface OrderPanelProps {
   cartItems: OrderItem[]; extras: ExtraItem[]; orderType: OrderType;
   tableNumber: number; peopleCount: number; customerName: string;
   deliveryAddress: string; deliveryCost: number; desiredTime: string;
-  isUrgent: boolean; orderNotes: string; newExtraDesc: string; newExtraPrice: string;
+  isUrgent: boolean; isOrderTagliato: boolean; orderNotes: string; newExtraDesc: string; newExtraPrice: string;
   saving: boolean; success: boolean; submitError: string | null;
   onOrderTypeChange: (t: OrderType) => void; onTableNumberChange: (n: number) => void;
   onPeopleCountChange: (n: number) => void; onCustomerNameChange: (s: string) => void;
   onDeliveryAddressChange: (s: string) => void; onDeliveryCostChange: (n: number) => void;
-  onDesiredTimeChange: (s: string) => void; onIsUrgentChange: (b: boolean) => void;
+  onDesiredTimeChange: (s: string) => void; onIsUrgentChange: (b: boolean) => void; onIsOrderTagliatoChange: (b: boolean) => void;
   onOrderNotesChange: (s: string) => void; onNewExtraDescChange: (s: string) => void;
   onNewExtraPriceChange: (s: string) => void; onAddExtra: () => void;
   onRemoveExtra: (i: number) => void; onRemoveCartItem: (cartId: string) => void;
@@ -232,6 +232,12 @@ function OrderPanelBody(p: OrderPanelProps) {
           </button>
         </div>
       </div>
+
+      {/* TAGLIATO complessivo ordine */}
+      <button onClick={() => p.onIsOrderTagliatoChange(!p.isOrderTagliato)}
+        className={`w-full py-3 rounded-xl text-sm font-bold border-2 transition-all flex items-center justify-center gap-2 ${p.isOrderTagliato ? "border-red-500 bg-red-500/20 text-red-300" : "border-gray-600 bg-gray-700 text-gray-400 hover:bg-gray-600"}`}>
+        {p.isOrderTagliato ? "☑️ TAGLIATO" : "☐ Tagliato"}
+      </button>
 
       {/* Carrello */}
       {p.cartItems.length === 0 ? (
@@ -447,6 +453,7 @@ export default function OrdiniPage() {
   const [deliveryCost, setDeliveryCost]       = useState(2);
   const [desiredTime, setDesiredTime]         = useState("");
   const [isUrgent, setIsUrgent]               = useState(false);
+  const [isOrderTagliato, setIsOrderTagliato] = useState(false);
   const [orderNotes, setOrderNotes]           = useState("");
   const [modalItem, setModalItem]             = useState<MenuItem | null>(null);
   const [editingCartId, setEditingCartId]     = useState<string | null>(null);
@@ -552,12 +559,12 @@ export default function OrdiniPage() {
         customerName:    orderType !== "tavolo"   ? customerName   : undefined,
         deliveryAddress: orderType === "delivery" ? deliveryAddress : undefined,
         deliveryCost:    orderType === "delivery" ? deliveryCost   : undefined,
-        desiredTime:     desiredTime || undefined, isUrgent,
+        desiredTime:     desiredTime || undefined, isUrgent, isOrderTagliato: isOrderTagliato || undefined,
         orderNotes:      orderNotes || undefined, total: totals.grand,
       });
       clearCart();
       setCustomerName(""); setDeliveryAddress(""); setDesiredTime("");
-      setPeopleCount(2); setTableNumber(1); setIsUrgent(false); setOrderNotes("");
+      setPeopleCount(2); setTableNumber(1); setIsUrgent(false); setIsOrderTagliato(false); setOrderNotes("");
       setSuccess(true); setCartOpen(false);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: unknown) {
@@ -568,7 +575,7 @@ export default function OrdiniPage() {
 
   const panelProps: OrderPanelProps = {
     cartItems, extras, orderType, tableNumber, peopleCount, customerName,
-    deliveryAddress, deliveryCost, desiredTime, isUrgent, orderNotes,
+    deliveryAddress, deliveryCost, desiredTime, isUrgent, isOrderTagliato, orderNotes,
     newExtraDesc, newExtraPrice, saving, success, submitError,
     onOrderTypeChange:       setOrderType,
     onTableNumberChange:     setTableNumber,
@@ -578,6 +585,7 @@ export default function OrdiniPage() {
     onDeliveryCostChange:    setDeliveryCost,
     onDesiredTimeChange:     setDesiredTime,
     onIsUrgentChange:        setIsUrgent,
+    onIsOrderTagliatoChange: setIsOrderTagliato,
     onOrderNotesChange:      setOrderNotes,
     onNewExtraDescChange:    setNewExtraDesc,
     onNewExtraPriceChange:   setNewExtraPrice,
@@ -645,18 +653,18 @@ export default function OrdiniPage() {
             {renderGrid()}
           </div>
         </div>
-        <div className="w-[300px] shrink-0 flex flex-col overflow-hidden bg-gray-900 border border-gray-800 rounded-2xl">
-          <div className="px-4 py-3 border-b border-gray-800 shrink-0 flex items-center justify-between bg-gray-800">
+        <div className="w-[300px] shrink-0 flex flex-col overflow-hidden border border-gray-700 rounded-2xl" style={{backgroundColor: "rgb(36, 36, 36)"}}>
+          <div className="px-4 py-3 border-b border-gray-700 shrink-0 flex items-center justify-between" style={{backgroundColor: "rgb(46, 46, 46)"}}>
             <div className="flex items-center gap-2">
               <span className="text-white font-bold text-sm">🧾 Ordine</span>
-              {totalItems > 0 && <span className="bg-orange-500 text-white text-[10px] rounded-full px-2 py-0.5 font-black">{totalItems}</span>}
+              {totalItems > 0 && <span className="bg-red-600 text-white text-[10px] rounded-full px-2 py-0.5 font-black">{totalItems}</span>}
             </div>
             <div className="flex items-center gap-2">
               {isUrgent && <span className="text-red-400 text-[10px] font-bold animate-pulse">🔴</span>}
               {totals.grand > 0 && <span className="text-orange-400 text-sm font-black">€{totals.grand.toFixed(2)}</span>}
             </div>
           </div>
-          <div className="flex-1 overflow-hidden bg-gray-850">
+          <div className="flex-1 overflow-hidden" style={{backgroundColor: "rgb(36, 36, 36)"}}>
             <OrderPanelDesktop {...panelProps} />
           </div>
         </div>

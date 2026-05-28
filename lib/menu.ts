@@ -74,7 +74,7 @@ export const menu: MenuItem[] = [
   { id: "bi5", name: "Birra IPA",            price: 5.0, category: "bibite", tag: "vegano", glutenFree: false, ingredients: [] },
 
   // ========== SPECIALITÀ ==========
-  { id: "s1", name: "Cotoletta e Patatine", price: 12.0, category: "specialita", tag: "normale",     glutenFree: false, ingredients: ["cotoletta", "patatine fritte"] },
+  { id: "s1", name: "Cotoletta e Patatine", price: 12.0, category: "fritti", tag: "normale",     glutenFree: false, ingredients: ["cotoletta", "patatine fritte"] },
   { id: "s2", name: "Il Frico",             price: 12.0, category: "specialita", tag: "vegetariano", glutenFree: true,  ingredients: ["frico", "patate al forno", "insalata"] },
 
   // ========== PIZZA PERSONALIZZATA ==========

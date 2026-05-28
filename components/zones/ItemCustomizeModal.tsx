@@ -394,14 +394,6 @@ export default function ItemCustomizeModal({ item, existingCartItem, onConfirm, 
               className="w-full bg-gray-700 text-white rounded-xl px-3 py-2 text-sm outline-none resize-none border border-gray-600" />
           </section>
 
-          {/* ── TAGLIATO ── */}
-          <section>
-            <button onClick={() => setIsTagliato(!isTagliato)}
-              className={`w-full py-3 rounded-xl text-sm font-bold border-2 transition-all flex items-center justify-center gap-2 ${isTagliato ? "border-red-500 bg-red-500/20 text-red-300" : "border-gray-600 bg-gray-700 text-gray-400 hover:bg-gray-600"}`}>
-              {isTagliato ? "☑️ TAGLIATO" : "☐ Tagliato"}
-            </button>
-          </section>
-
           {/* ── QUANTITÀ ── */}
           <section className="flex items-center justify-between bg-gray-700/50 rounded-xl px-4 py-3">
             <p className="text-gray-200 font-semibold">Quantità</p>

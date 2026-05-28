@@ -23,7 +23,7 @@ export interface Order {
   items: OrderItem[]; extras: ExtraItem[];
   tableNumber?: number; peopleCount?: number;
   customerName?: string; deliveryAddress?: string; deliveryCost?: number;
-  desiredTime?: string; isUrgent: boolean; orderNotes?: string;
+  desiredTime?: string; isUrgent: boolean; isOrderTagliato?: boolean; orderNotes?: string;
   total: number; createdAt: Date; updatedAt: Date;
   isCancelled?: boolean; cancelledAt?: Date;
   isPaid?: boolean; paymentMethod?: "contanti" | "carta"; felice?: boolean; paidAt?: Date;
