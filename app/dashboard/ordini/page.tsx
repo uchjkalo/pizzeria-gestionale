@@ -26,6 +26,10 @@ const calcTotals = (
 const inputCls = "w-full bg-white text-gray-900 rounded-xl px-3 py-3 text-sm outline-none ring-1 ring-gray-300 focus:ring-2 focus:ring-orange-500 transition-all placeholder:text-gray-500 mt-1";
 const labelCls = "text-gray-700 text-[10px] uppercase tracking-widest font-bold";
 
+// Dark theme variants for the sidebar
+const inputClsDark = "w-full bg-gray-700 text-gray-100 rounded-xl px-3 py-3 text-sm outline-none ring-1 ring-gray-600 focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 mt-1";
+const labelClsDark = "text-gray-300 text-[10px] uppercase tracking-widest font-bold";
+
 /* ══════════════════════════════════════════════════════════
    SUB-COMPONENTS — all outside OrdiniPage (avoids remount)
 ══════════════════════════════════════════════════════════ */
@@ -223,7 +227,7 @@ function OrderPanelBody(p: OrderPanelProps) {
         <div><label className={labelCls}>Orario</label><input type="time" value={p.desiredTime} onChange={e => p.onDesiredTimeChange(e.target.value)} className={inputCls} /></div>
         <div className="flex flex-col justify-end">
           <button onClick={() => p.onIsUrgentChange(!p.isUrgent)}
-            className={`py-3 rounded-xl text-xs font-bold border-2 transition-all ${p.isUrgent ? "border-red-500 bg-red-100 text-red-700" : "border-gray-300 bg-white text-gray-900"}`}>
+            className={`py-3 rounded-xl text-xs font-bold border-2 transition-all ${p.isUrgent ? "border-red-600 bg-red-600 text-white shadow-lg shadow-red-600/30" : "border-gray-300 bg-white text-gray-900"}`}>
             🔴 URGENTE
           </button>
         </div>
@@ -256,6 +260,7 @@ function OrderPanelBody(p: OrderPanelProps) {
                     {ci.removedIngredients.length > 0 && <p className="text-red-600 text-[10px]">✗ {ci.removedIngredients.join(", ")}</p>}
                     {ci.addedIngredients.length > 0 && <p className="text-green-700 text-[10px]">+ {ci.addedIngredients.map(i => i.name).join(", ")}</p>}
                     {ci.manualAdditions?.length > 0 && <p className="text-orange-700 text-[10px]">✏️ {ci.manualAdditions.map(m => m.name).join(", ")}</p>}
+                    {ci.isTagliato && <p className="text-red-700 text-[10px] font-bold">☑️ TAGLIATO</p>}
                     {ci.notes && <p className="text-gray-600 text-[10px] italic">"{ci.notes}"</p>}
                     <p className="text-orange-600 text-[10px] font-semibold mt-0.5">
                       €{ci.effectivePrice.toFixed(2)} × {ci.quantity} = <span className="font-black">€{(ci.effectivePrice * ci.quantity).toFixed(2)}</span>
@@ -312,26 +317,26 @@ function OrderPanelBody(p: OrderPanelProps) {
 function OrderPanelFooter(p: OrderPanelProps) {
   const totals = calcTotals(p.cartItems, p.extras, p.orderType, p.peopleCount, p.deliveryCost);
   return (
-    <div className="border-t border-gray-300 bg-white p-3 space-y-2">
+    <div className="border-t border-gray-600 bg-gray-800 p-3 space-y-2 text-gray-100">
       {/* Breakdown totale */}
       <div className="space-y-0.5">
-        {totals.copertoTotal > 0 && <div className="flex justify-between text-xs text-gray-700"><span>Coperto ({p.peopleCount} pers.)</span><span>€{totals.copertoTotal.toFixed(2)}</span></div>}
-        {totals.deliveryTotal > 0 && <div className="flex justify-between text-xs text-gray-700"><span>Delivery</span><span>€{totals.deliveryTotal.toFixed(2)}</span></div>}
-        {totals.extrasTotal > 0 && <div className="flex justify-between text-xs text-gray-700"><span>Extra</span><span>€{totals.extrasTotal.toFixed(2)}</span></div>}
-        <div className="flex justify-between items-baseline pt-1 border-t border-gray-300">
-          <span className="text-gray-700 text-sm font-semibold">Totale</span>
-          <span className="text-orange-600 font-black text-2xl tabular-nums">€{totals.grand.toFixed(2)}</span>
+        {totals.copertoTotal > 0 && <div className="flex justify-between text-xs text-gray-300"><span>Coperto ({p.peopleCount} pers.)</span><span>€{totals.copertoTotal.toFixed(2)}</span></div>}
+        {totals.deliveryTotal > 0 && <div className="flex justify-between text-xs text-gray-300"><span>Delivery</span><span>€{totals.deliveryTotal.toFixed(2)}</span></div>}
+        {totals.extrasTotal > 0 && <div className="flex justify-between text-xs text-gray-300"><span>Extra</span><span>€{totals.extrasTotal.toFixed(2)}</span></div>}
+        <div className="flex justify-between items-baseline pt-1 border-t border-gray-600">
+          <span className="text-gray-300 text-sm font-semibold">Totale</span>
+          <span className="text-orange-400 font-black text-2xl tabular-nums">€{totals.grand.toFixed(2)}</span>
         </div>
       </div>
       {/* Feedback */}
       {p.success && (
-        <div className="bg-green-100 border border-green-300 rounded-xl py-2 text-center">
-          <p className="text-green-700 text-sm font-bold">✅ Ordine inviato!</p>
+        <div className="bg-green-900 border border-green-700 rounded-xl py-2 text-center">
+          <p className="text-green-300 text-sm font-bold">✅ Ordine inviato!</p>
         </div>
       )}
       {p.submitError && (
-        <div className="bg-red-100 border border-red-300 rounded-xl px-3 py-2">
-          <p className="text-red-700 text-xs font-bold">❌ Errore: {p.submitError}</p>
+        <div className="bg-red-900 border border-red-700 rounded-xl px-3 py-2">
+          <p className="text-red-300 text-xs font-bold">❌ Errore: {p.submitError}</p>
         </div>
       )}
       {/* Invia */}
@@ -339,14 +344,14 @@ function OrderPanelFooter(p: OrderPanelProps) {
         className={`w-full font-bold py-4 rounded-2xl text-sm transition-all active:scale-[0.98] ${
           p.cartItems.length > 0 && !p.saving
             ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-[0_4px_20px_rgba(249,115,22,0.3)]"
-            : "bg-gray-200 text-gray-500 cursor-not-allowed"
+            : "bg-gray-700 text-gray-500 cursor-not-allowed"
         }`}>
         {p.saving ? "⏳ Invio..." : `✅ Invia ordine · €${totals.grand.toFixed(2)}`}
       </button>
       <div className="grid grid-cols-2 gap-2">
-        <button onClick={p.onGoToCassa} className="bg-gray-200 hover:bg-gray-300 border border-gray-400 text-gray-900 text-xs py-3 rounded-2xl font-semibold transition-all">💳 Cassa</button>
+        <button onClick={p.onGoToCassa} className="bg-gray-700 hover:bg-gray-600 border border-gray-600 text-gray-100 text-xs py-3 rounded-2xl font-semibold transition-all">💳 Cassa</button>
         <button onClick={p.onClearCart} disabled={p.cartItems.length === 0}
-          className="bg-gray-200 hover:bg-red-200 hover:border-red-400 border border-gray-400 disabled:opacity-25 text-gray-900 hover:text-red-700 text-xs py-3 rounded-2xl font-semibold disabled:cursor-not-allowed transition-all">
+          className="bg-gray-700 hover:bg-red-900 hover:border-red-700 border border-gray-600 disabled:opacity-25 text-gray-100 hover:text-red-300 text-xs py-3 rounded-2xl font-semibold disabled:cursor-not-allowed transition-all">
           🗑 Svuota
         </button>
       </div>
@@ -357,9 +362,11 @@ function OrderPanelFooter(p: OrderPanelProps) {
 /** Versione desktop: tutto in un pannello scorrevole fisso */
 function OrderPanelDesktop(p: OrderPanelProps) {
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-gray-900 text-gray-100">
       <div className="flex-1 overflow-y-auto">
-        <OrderPanelBody {...p} />
+        <div className="[&_label]:text-gray-300 [&_input]:bg-gray-700 [&_input]:text-gray-100 [&_input]:ring-gray-600 [&_input::placeholder]:text-gray-400 [&_textarea]:bg-gray-700 [&_textarea]:text-gray-100 [&_textarea]:ring-gray-600 [&_textarea::placeholder]:text-gray-400 [&_button]:text-gray-900 [&_.bg-gray-100]:bg-gray-800 [&_.bg-gray-100]:text-gray-100 [&_.bg-white]:bg-gray-700 [&_.bg-white]:text-gray-100 [&_.border-gray-300]:border-gray-600 [&_.text-gray-700]:text-gray-300 [&_.text-gray-900]:text-gray-100 [&_.text-orange-600]:text-orange-400 [&_.bg-gray-200]:bg-gray-700 [&_.hover\:bg-blue-200]:hover:bg-blue-900 [&_.text-gray-600]:text-gray-400 [&_.hover\:text-blue-600]:hover:text-blue-300 [&_.hover\:bg-red-200]:hover:bg-red-900 [&_.hover\:text-red-600]:hover:text-red-300 [&_.focus\:ring-orange-500]:focus:ring-orange-400">
+          <OrderPanelBody {...p} />
+        </div>
       </div>
       <OrderPanelFooter {...p} />
     </div>
@@ -638,18 +645,18 @@ export default function OrdiniPage() {
             {renderGrid()}
           </div>
         </div>
-        <div className="w-[300px] shrink-0 flex flex-col overflow-hidden bg-white border border-gray-300 rounded-2xl">
-          <div className="px-4 py-3 border-b border-gray-300 shrink-0 flex items-center justify-between">
+        <div className="w-[300px] shrink-0 flex flex-col overflow-hidden bg-gray-900 border border-gray-800 rounded-2xl">
+          <div className="px-4 py-3 border-b border-gray-800 shrink-0 flex items-center justify-between bg-gray-800">
             <div className="flex items-center gap-2">
-              <span className="text-gray-900 font-bold text-sm">🧾 Ordine</span>
+              <span className="text-white font-bold text-sm">🧾 Ordine</span>
               {totalItems > 0 && <span className="bg-orange-500 text-white text-[10px] rounded-full px-2 py-0.5 font-black">{totalItems}</span>}
             </div>
             <div className="flex items-center gap-2">
-              {isUrgent && <span className="text-red-600 text-[10px] font-bold animate-pulse">🔴</span>}
-              {totals.grand > 0 && <span className="text-orange-600 text-sm font-black">€{totals.grand.toFixed(2)}</span>}
+              {isUrgent && <span className="text-red-400 text-[10px] font-bold animate-pulse">🔴</span>}
+              {totals.grand > 0 && <span className="text-orange-400 text-sm font-black">€{totals.grand.toFixed(2)}</span>}
             </div>
           </div>
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden bg-gray-850">
             <OrderPanelDesktop {...panelProps} />
           </div>
         </div>
