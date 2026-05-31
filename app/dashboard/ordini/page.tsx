@@ -129,8 +129,8 @@ function MenuCard({ item, totalQty, directQty, onPrimary, onDirectAdd, onDirectR
         className={`w-full border rounded-2xl p-3 text-left transition-all duration-150 group h-40 flex flex-col ${
           isCustom
             ? inCart ? "bg-purple-100 border-purple-300" : "bg-white border-purple-200 hover:border-purple-300"
-            : inCart ? "color-mix(lab(40.4273 67.2623 53.7441) 30%, transparent); text-white shadow-lg shadow-red-600/40 hover:bg-red-700"
-                     : "color-mix(lab(40.4273 67.2623 53.7441) 30%, transparent); hover:border-red-700 hover:bg-red-600 text-white"
+            : inCart ? "color-mix(lab(40.4273 67.2623 53.7441) 30%, transparent); text-white shadow-lg shadow-red-600/40 hover:bg-red-100"
+                     : "color-mix(lab(40.4273 67.2623 53.7441) 30%, transparent); hover:border-red-200 hover:bg-red-100 text-white"
         }`}>
         {inCart && (
           <span className={`absolute -top-2 -right-2 z-10 w-6 h-6 rounded-full text-[11px] font-black text-white flex items-center justify-center shadow-lg ${isCustom ? "bg-purple-500" : "bg-red-600"}`}>
