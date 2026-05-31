@@ -188,75 +188,60 @@ if (loading) return <div className="flex items-center justify-center h-64"><p cl
   );
 
   return (
-    <div className="h-[calc(100vh-100px)] md:h-[calc(100vh-80px)] flex flex-col gap-4 overflow-hidden bg-gray-50">
-      <div className="flex items-center justify-between px-6 py-4 shrink-0 border-b border-gray-300 bg-gray-100">
-        <h1 className="text-gray-900 text-2xl md:text-3xl font-bold">🍕 Preparazione</h1>
-        <div className="flex items-center gap-4">
-          <span className="text-gray-700 text-sm font-medium hidden sm:inline"></span>
-          <div className="flex items-center gap-2">
-            <span className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${inPreparazione.length > 0 ? "bg-red-600 text-white shadow-md" : "bg-gray-200 text-gray-700"}`}>
-              👨‍🍳 {inPreparazione.length}
-            </span>
-            {conclusi.length > 0 && <span className="bg-red-100 text-red-700 px-3 py-2 rounded-full text-xs font-bold shadow-md">✅ {conclusi.length}</span>}
-          </div>
+    <div className="h-[calc(100vh-80px)] flex flex-col gap-3 overflow-hidden bg-gray-50 p-4 md:p-6">
+      <div className="flex items-center justify-between shrink-0 bg-gray-100 px-6 py-4 rounded-xl border border-gray-300 shadow-sm">
+        <h1 className="text-gray-900 text-xl md:text-2xl font-bold">🍕 Preparazione</h1>
+        <div className="flex gap-1.5 text-xs">
+          <span className={`px-2.5 py-1 rounded-lg font-bold ${inPreparazione.length > 0 ? "bg-red-600 text-white" : "bg-gray-300 text-gray-700"}`}>
+            👨‍🍳 {inPreparazione.length}
+          </span>
+          <span className="bg-green-600 text-white px-2.5 py-1 rounded-lg font-bold">✅ {conclusi.length}</span>
         </div>
       </div>
 
       {/* Mobile tabs */}
-      <div className="md:hidden flex gap-2 px-4 py-3 shrink-0 bg-gray-100 border-b border-gray-300">
+      <div className="md:hidden flex gap-2 shrink-0">
         <button onClick={() => setMobileTab("pronti")}
-          className={`flex-1 py-2.5 rounded-lg font-semibold text-sm transition-all relative ${mobileTab === "pronti" ? "bg-red-600 text-white shadow-md" : "bg-gray-200 text-gray-900 hover:bg-gray-300"}`}>
+          className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-colors relative border ${mobileTab === "pronti" ? "bg-red-600 text-white border-red-500" : "bg-gray-200 text-gray-700 border-gray-300"}`}>
           👨‍🍳 In preparazione
-          {inPreparazione.length > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">{inPreparazione.length}</span>}
+          {inPreparazione.length > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">{inPreparazione.length}</span>
+          )}
         </button>
         <button onClick={() => setMobileTab("conclusi")}
-          className={`flex-1 py-2.5 rounded-lg font-semibold text-sm transition-all ${mobileTab === "conclusi" ? "bg-red-600 text-white shadow-md" : "bg-gray-200 text-gray-900 hover:bg-gray-300"}`}>
+          className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-colors border ${mobileTab === "conclusi" ? "bg-green-600 text-white border-green-500" : "bg-gray-200 text-gray-700 border-gray-300"}`}>
           ✅ Pronti ({conclusi.length})
         </button>
       </div>
 
-      {/* Mobile */}
+      {/* Mobile content */}
       <div className="md:hidden flex-1 overflow-y-auto">
         {mobileTab === "pronti" ? (
           inPreparazione.length === 0
             ? <div className="flex flex-col items-center justify-center h-40 text-gray-500"><p className="text-5xl mb-3">✅</p><p className="font-medium">Nessun ordine in preparazione</p></div>
-            : <div className="space-y-3">{inPreparazione.map(o => <AssemblyCard key={o.id} order={o} />)}</div>
-        ) : <ConclusiList />}
+            : <div className="space-y-3 px-4">{inPreparazione.map(o => <AssemblyCard key={o.id} order={o} />)}</div>
+        ) : <div className="px-4"><ConclusiList /></div>}
       </div>
 
       {/* Desktop 2-col */}
-        <div className="hidden md:flex gap-5 flex-1 overflow-hidden">
-          <div className="flex-1 flex flex-col overflow-hidden gap-4">
-            {/* PREPARAZIONE */}
-            <div className="flex-1 flex flex-col overflow-hidden min-h-0">
-              <h2 className="text-gray-200 font-bold text-base shrink-0 bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 mb-4">
-                👨‍🍳 In preparazione ({inPreparazione.length})
-              </h2>
-            <div className="flex-1 overflow-y-auto space-y-4">
-              {inPreparazione.length === 0
-                ? <div className="flex flex-col items-center justify-center h-40 text-gray-500"><p className="text-5xl mb-3">✅</p><p className="font-medium">Nessun ordine</p></div>
-                : inPreparazione.map(o => <AssemblyCard key={o.id} order={o} />)}
-            </div>
-            </div>
-            
-            {/* IN ATTESA (Punto 9) */}
-            <div className="flex-1 flex flex-col overflow-hidden min-h-0">
-              <h2 className="text-gray-200 font-bold text-base shrink-0 bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 mb-4">
-                ⏳ In attesa ({inAttesa.length})
-              </h2>
-            <div className="flex-1 overflow-y-auto space-y-4">
-              {inAttesa.length === 0
-                ? <div className="flex flex-col items-center justify-center h-40 text-gray-500"><p className="text-5xl mb-3">✨</p><p className="font-medium">Nessun ordine in attesa</p></div>
-                : inAttesa.map(o => <AssemblyCard key={o.id} order={o} />)}
-            </div>
-            </div>
+      <div className="hidden md:flex gap-4 flex-1 overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <h2 className="text-gray-900 font-bold text-sm shrink-0 bg-gray-100 border border-gray-300 rounded-lg px-3 py-2 mb-3">
+            👨‍🍳 In preparazione ({inPreparazione.length})
+          </h2>
+          <div className="flex-1 overflow-y-auto">
+            {inPreparazione.length === 0
+              ? <div className="flex flex-col items-center justify-center h-40 text-gray-500"><p className="text-5xl mb-3">✅</p><p className="font-medium">Nessun ordine</p></div>
+              : <div className="space-y-4">{inPreparazione.map(o => <AssemblyCard key={o.id} order={o} />)}</div>}
           </div>
-          
-          <div className="w-80 flex flex-col gap-4 overflow-hidden">
-            <h2 className="text-gray-200 font-bold text-base shrink-0 bg-gray-700 border border-gray-600 rounded-lg px-4 py-3">
-              ✅ Pronti ({conclusi.length})
-            </h2>
-          <div className="flex-1 overflow-y-auto"><ConclusiList /></div>
+        </div>
+        <div className="w-80 flex flex-col overflow-hidden">
+          <h2 className="text-gray-900 font-bold text-sm shrink-0 bg-gray-100 border border-gray-300 rounded-lg px-3 py-2 mb-3">
+            ✅ Pronti ({conclusi.length})
+          </h2>
+          <div className="flex-1 overflow-y-auto">
+            <ConclusiList />
+          </div>
         </div>
       </div>
     </div>
