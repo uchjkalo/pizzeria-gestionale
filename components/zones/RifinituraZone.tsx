@@ -172,22 +172,22 @@ function AssemblyCard({ order, tagliata, onToggleTagliata, checked, onToggleChec
   const hasModifications = chips.length > 0;
 
   return (
-    <div className={`bg-gray-700 rounded-2xl border p-4 flex flex-col gap-3 transition-all shadow-sm ${
-      order.isUrgent || minutes >= 10 ? "border-red-500 shadow-md" : "border-gray-600"
+    <div className={`bg-gray-100 rounded-2xl border p-4 flex flex-col gap-3 transition-all shadow-sm ${
+      order.isUrgent || minutes >= 10 ? "border-red-500 shadow-md" : "border-gray-400"
     }`}>
 
       {/* ── HEADER ── */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-white font-bold text-base">{orderLabel(order)}</p>
+            <p className="text-gray-900 font-bold text-base">{orderLabel(order)}</p>
             {order.isUrgent && (
               <span className="bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full animate-pulse">
                 🔴 URGENTE
               </span>
             )}
             {order.isPaid && (
-              <span className="bg-green-900/40 text-green-200 text-[10px] font-bold px-2 py-0.5 rounded-full">
+              <span className="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
                 💳 Pagato
               </span>
             )}
@@ -197,13 +197,13 @@ function AssemblyCard({ order, tagliata, onToggleTagliata, checked, onToggleChec
               </span>
             )}
           </div>
-          <p className="text-gray-400 text-xs mt-0.5">
+          <p className="text-gray-700 text-xs mt-0.5">
             🕐 {formatTime(order.createdAt)}
-            {order.desiredTime && <span className="text-red-400 ml-2">→ {order.desiredTime}</span>}
+            {order.desiredTime && <span className="text-red-600 ml-2">→ {order.desiredTime}</span>}
           </p>
         </div>
         <span className={`text-xs font-black px-2.5 py-1.5 rounded-xl shrink-0 tabular-nums border ${
-          minutes >= 10 ? "bg-red-600 text-white border-red-500" : "bg-gray-600 text-gray-300 border-gray-500"
+          minutes >= 10 ? "bg-red-600 text-white border-red-500" : "bg-gray-300 text-gray-700 border-gray-400"
         }`}>⏱{minutes}m</span>
       </div>
 
@@ -211,7 +211,7 @@ function AssemblyCard({ order, tagliata, onToggleTagliata, checked, onToggleChec
       {pack.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {pack.map((p, i) => (
-            <span key={i} className="bg-gray-600 border border-gray-500 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-gray-200 flex items-center gap-1.5">
+            <span key={i} className="bg-gray-200 border border-gray-400 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-gray-700 flex items-center gap-1.5">
               <span>{p.icon}</span>
               <span>{p.count !== undefined && p.count > 1 ? `${p.count}× ` : ""}{p.text}</span>
             </span>
@@ -223,7 +223,7 @@ function AssemblyCard({ order, tagliata, onToggleTagliata, checked, onToggleChec
               className={`rounded-xl px-2.5 py-1.5 text-xs font-bold border transition-all ${
                 tagliata
                   ? "bg-red-600 border-red-500 text-white"
-                  : "bg-gray-600 border-gray-500 text-gray-300 hover:text-gray-200 hover:border-gray-400"
+                  : "bg-gray-200 border-gray-400 text-gray-700 hover:text-gray-900 hover:border-gray-400"
               }`}>
               ✂️ Tagliata
             </button>
@@ -232,26 +232,26 @@ function AssemblyCard({ order, tagliata, onToggleTagliata, checked, onToggleChec
       )}
 
       {/* ── PRODOTTI (lista compatta) ── */}
-      <div className="bg-gray-600 rounded-xl px-3 py-2.5 space-y-1 border border-gray-500">
+      <div className="bg-gray-50 rounded-xl px-3 py-2.5 space-y-1 border border-gray-300">
         {order.items.map(item => (
           <div key={item.cartId} className="flex items-center gap-2 text-sm">
-            {item.quantity > 1 && <span className="text-red-400 font-bold shrink-0">×{item.quantity}</span>}
-            <span className={item.id === "custom_pizza" ? "text-red-400 font-semibold" : "text-gray-200 font-medium"}>
+            {item.quantity > 1 && <span className="text-red-600 font-bold shrink-0">×{item.quantity}</span>}
+            <span className={item.id === "custom_pizza" ? "text-red-600 font-semibold" : "text-gray-900 font-medium"}>
               {item.name}
             </span>
             {item.size !== "normale" && (
               <span className={`text-[10px] font-black px-1.5 py-0.5 rounded border ${
-                item.size === "maxi" ? "bg-red-600 border-red-500 text-red-200" : "bg-gray-500 border-gray-400 text-gray-200"
+                item.size === "maxi" ? "bg-red-600 border-red-500 text-red-100" : "bg-gray-300 border-gray-400 text-gray-700"
               }`}>{item.size.toUpperCase()}</span>
             )}
             {item.isHalf && item.halfPizza1 && item.halfPizza2 && (
-              <span className="text-red-400 text-xs font-semibold">½+½</span>
+              <span className="text-red-600 text-xs font-semibold">½+½</span>
             )}
           </div>
         ))}
         {order.extras?.map((e, i) => (
-          <div key={i} className="flex items-center gap-2 text-sm text-red-400">
-            <span className="text-red-400 shrink-0 text-xs font-bold">➕</span>
+          <div key={i} className="flex items-center gap-2 text-sm text-red-600">
+            <span className="text-red-600 shrink-0 text-xs font-bold">➕</span>
             <span>{e.description}</span>
           </div>
         ))}
@@ -262,7 +262,7 @@ function AssemblyCard({ order, tagliata, onToggleTagliata, checked, onToggleChec
         <div className="space-y-2">
           {Object.entries(grouped).map(([prodName, prodChips]) => (
             <div key={prodName}>
-              <p className="text-gray-300 text-[10px] font-bold uppercase tracking-widest mb-1.5">
+              <p className="text-gray-700 text-[10px] font-bold uppercase tracking-widest mb-1.5">
                 {prodName}
               </p>
               <div className="flex flex-wrap gap-1.5">
@@ -274,7 +274,7 @@ function AssemblyCard({ order, tagliata, onToggleTagliata, checked, onToggleChec
                       onClick={() => onToggleCheck(chip.key)}
                       className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-semibold transition-all active:scale-95 ${
                         done
-                          ? "bg-gray-600 border-gray-500 text-gray-400 line-through opacity-60"
+                          ? "bg-gray-300 border-gray-400 text-gray-600 line-through opacity-60"
                           : chipStyle[chip.type]
                       }`}>
                       <span className="font-bold">{done ? "✓" : chipIcon[chip.type]}</span>
@@ -288,13 +288,13 @@ function AssemblyCard({ order, tagliata, onToggleTagliata, checked, onToggleChec
 
           {/* Mini progress */}
           <div className="flex items-center gap-2">
-            <div className="flex-1 h-1 bg-gray-600 rounded-full overflow-hidden">
+            <div className="flex-1 h-1 bg-gray-300 rounded-full overflow-hidden">
               <div
                 className="h-full bg-red-500 rounded-full transition-all duration-300"
                 style={{ width: `${chips.length > 0 ? (Array.from(checked).filter(k => chips.some(c => c.key === k)).length / chips.length) * 100 : 100}%` }}
               />
             </div>
-            <span className="text-gray-400 text-[10px] tabular-nums">
+            <span className="text-gray-700 text-[10px] tabular-nums">
               {Array.from(checked).filter(k => chips.some(c => c.key === k)).length}/{chips.length}
             </span>
           </div>
@@ -303,8 +303,8 @@ function AssemblyCard({ order, tagliata, onToggleTagliata, checked, onToggleChec
 
       {/* ── NOTE ── */}
       {order.orderNotes && (
-        <div className="bg-yellow-900/30 border border-yellow-700/50 rounded-xl px-3 py-2">
-          <p className="text-yellow-300 text-sm">📋 {order.orderNotes}</p>
+        <div className="bg-red-50 border border-red-300 rounded-xl px-3 py-2">
+          <p className="text-red-700 text-sm">📋 {order.orderNotes}</p>
         </div>
       )}
 
@@ -314,8 +314,8 @@ function AssemblyCard({ order, tagliata, onToggleTagliata, checked, onToggleChec
         disabled={hasModifications && !allDone}
         className={`w-full font-bold py-3.5 rounded-2xl text-sm transition-all active:scale-[0.98] border ${
           !hasModifications || allDone
-            ? "bg-green-600 hover:bg-green-700 text-white border-green-500 shadow-md hover:shadow-lg"
-            : "bg-gray-600 text-gray-400 border-gray-500 cursor-not-allowed opacity-60"
+            ? "bg-red-600 hover:bg-red-700 text-white border-red-500 shadow-md hover:shadow-lg"
+            : "bg-gray-300 text-gray-600 border-gray-400 cursor-not-allowed opacity-60"
         }`}>
         {hasModifications && !allDone
           ? `⏳ Completa modifiche prima`
@@ -393,42 +393,42 @@ export default function RifinituraZone() {
   const ConclusiList = () => (
     <div className="space-y-2">
       {conclusi.length === 0 && (
-        <p className="text-gray-400 text-sm text-center mt-10">Nessun ordine concluso</p>
+        <p className="text-gray-600 text-sm text-center mt-10">Nessun ordine concluso</p>
       )}
       {conclusi.map(order => {
         const isOpen = expanded.has(order.id);
         return (
-          <div key={order.id} className="bg-gray-700 rounded-2xl border border-gray-600 overflow-hidden">
+          <div key={order.id} className="bg-gray-100 rounded-2xl border border-gray-400 overflow-hidden">
             <button onClick={() => toggleExpanded(order.id)}
-              className="w-full p-4 text-left flex items-center justify-between gap-2 active:bg-gray-600/30 transition-colors">
+              className="w-full p-4 text-left flex items-center justify-between gap-2 active:bg-gray-200/30 transition-colors">
               <div className="flex-1 min-w-0">
-                <p className="text-white text-sm font-bold truncate">{orderLabel(order)}</p>
+                <p className="text-gray-900 text-sm font-bold truncate">{orderLabel(order)}</p>
                 <div className="flex gap-2 mt-0.5">
-                  <p className="text-gray-400 text-xs">{formatTime(order.createdAt)}</p>
-                  {order.isPaid && <p className="text-green-400 text-xs font-bold">💳</p>}
+                  <p className="text-gray-700 text-xs">{formatTime(order.createdAt)}</p>
+                  {order.isPaid && <p className="text-red-600 text-xs font-bold">💳</p>}
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-red-400 text-sm font-bold tabular-nums">€{order.total.toFixed(2)}</span>
-                <span className="text-gray-400 text-sm">{isOpen ? "▲" : "▼"}</span>
+                <span className="text-red-600 text-sm font-bold tabular-nums">€{order.total.toFixed(2)}</span>
+                <span className="text-gray-700 text-sm">{isOpen ? "▲" : "▼"}</span>
               </div>
             </button>
             {isOpen && (
-              <div className="border-t border-gray-600 p-3 space-y-1.5 bg-gray-600">
+              <div className="border-t border-gray-300 p-3 space-y-1.5 bg-gray-50">
                 {order.items.map(item => (
-                  <div key={item.cartId} className="text-xs text-gray-300">
-                    <span className="text-gray-200 font-medium">
-                      {item.quantity > 1 && <span className="text-red-400">×{item.quantity} </span>}
+                  <div key={item.cartId} className="text-xs text-gray-700">
+                    <span className="text-gray-900 font-medium">
+                      {item.quantity > 1 && <span className="text-red-600">×{item.quantity} </span>}
                       {item.name}
-                      {item.size !== "normale" && <span className="text-red-400"> [{item.size}]</span>}
+                      {item.size !== "normale" && <span className="text-red-600"> [{item.size}]</span>}
                     </span>
-                    {item.removedIngredients.length > 0 && <p className="text-red-400 pl-2">✗ {item.removedIngredients.join(", ")}</p>}
-                    {item.addedIngredients.length > 0   && <p className="text-gray-300 pl-2">+ {item.addedIngredients.map(x => x.name).join(", ")}</p>}
-                    {item.notes && <p className="text-yellow-400 pl-2">📝 {item.notes}</p>}
+                    {item.removedIngredients.length > 0 && <p className="text-red-600 pl-2">✗ {item.removedIngredients.join(", ")}</p>}
+                    {item.addedIngredients.length > 0   && <p className="text-gray-900 pl-2">+ {item.addedIngredients.map(x => x.name).join(", ")}</p>}
+                    {item.notes && <p className="text-red-600 pl-2">📝 {item.notes}</p>}
                   </div>
                 ))}
                 {order.isPaid && (
-                  <p className="text-green-400 text-xs font-semibold mt-1">
+                  <p className="text-red-600 text-xs font-semibold mt-1">
                     ✅ {order.paymentMethod === "contanti" ? "💵 Contanti" : "💳 Carta"}
                   </p>
                 )}
@@ -463,12 +463,12 @@ export default function RifinituraZone() {
   );
 
   return (
-    <div className="h-[calc(100vh-80px)] flex flex-col gap-3 overflow-hidden bg-gray-800 p-4 md:p-6">
+    <div className="h-[calc(100vh-80px)] flex flex-col gap-3 overflow-hidden bg-gray-50 p-4 md:p-6">
 
-      <div className="flex items-center justify-between shrink-0 bg-gray-700 px-6 py-4 rounded-xl border border-gray-600 shadow-sm">
-        <h1 className="text-white text-xl md:text-2xl font-bold">📦 Rifinitura</h1>
+      <div className="flex items-center justify-between shrink-0 bg-gray-100 px-6 py-4 rounded-xl border border-gray-300 shadow-sm">
+        <h1 className="text-gray-900 text-xl md:text-2xl font-bold">📦 Rifinitura</h1>
         <div className="flex gap-1.5 text-xs">
-          <span className={`px-2.5 py-1 rounded-lg font-bold ${inRifinitura.length > 0 ? "bg-red-600 text-white" : "bg-gray-600 text-gray-300"}`}>
+          <span className={`px-2.5 py-1 rounded-lg font-bold ${inRifinitura.length > 0 ? "bg-red-600 text-white" : "bg-gray-300 text-gray-700"}`}>
             🔧 {inRifinitura.length}
           </span>
           <span className="bg-green-600 text-white px-2.5 py-1 rounded-lg font-bold">✅ {conclusi.length}</span>
@@ -478,14 +478,14 @@ export default function RifinituraZone() {
       {/* Mobile tabs */}
       <div className="md:hidden flex gap-2 shrink-0">
         <button onClick={() => setMobileTab("pronti")}
-          className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-colors relative border ${mobileTab === "pronti" ? "bg-red-600 text-white border-red-500" : "bg-gray-700 text-gray-300 border-gray-600"}`}>
+          className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-colors relative border ${mobileTab === "pronti" ? "bg-red-600 text-white border-red-500" : "bg-gray-200 text-gray-700 border-gray-300"}`}>
           🔧 Da rifinire
           {inRifinitura.length > 0 && (
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">{inRifinitura.length}</span>
           )}
         </button>
         <button onClick={() => setMobileTab("conclusi")}
-          className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-colors border ${mobileTab === "conclusi" ? "bg-green-600 text-white border-green-500" : "bg-gray-700 text-gray-300 border-gray-600"}`}>
+          className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-colors border ${mobileTab === "conclusi" ? "bg-green-600 text-white border-green-500" : "bg-gray-200 text-gray-700 border-gray-300"}`}>
           ✅ Conclusi ({conclusi.length})
         </button>
       </div>
@@ -498,7 +498,7 @@ export default function RifinituraZone() {
       {/* Desktop 2-col */}
       <div className="hidden md:flex gap-4 flex-1 overflow-hidden">
         <div className="flex-1 flex flex-col overflow-hidden">
-          <h2 className="text-gray-200 font-bold text-sm shrink-0 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 mb-3">
+          <h2 className="text-gray-900 font-bold text-sm shrink-0 bg-gray-100 border border-gray-300 rounded-lg px-3 py-2 mb-3">
             🔧 Da rifinire ({inRifinitura.length})
           </h2>
           <div className="flex-1 overflow-y-auto">
@@ -506,7 +506,7 @@ export default function RifinituraZone() {
           </div>
         </div>
         <div className="w-72 flex flex-col overflow-hidden">
-          <h2 className="text-gray-200 font-bold text-sm shrink-0 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 mb-3">
+          <h2 className="text-gray-900 font-bold text-sm shrink-0 bg-gray-100 border border-gray-300 rounded-lg px-3 py-2 mb-3">
             ✅ Conclusi ({conclusi.length})
           </h2>
           <div className="flex-1 overflow-y-auto">

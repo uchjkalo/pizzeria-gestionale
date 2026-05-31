@@ -102,46 +102,46 @@ if (loading) return <div className="flex items-center justify-center h-64"><p cl
     const minutes = minutesSince(order.updatedAt);
     
     return (
-      <div className={`bg-gray-700 rounded-2xl border p-5 transition-all shadow-sm hover:shadow-md ${order.isUrgent || minutes >= 10 ? "border-red-500" : "border-gray-600"}`}>
+      <div className={`bg-gray-100 rounded-2xl border-2 p-5 transition-all shadow-sm hover:shadow-md ${order.isUrgent || minutes >= 10 ? "border-red-500" : "border-gray-400"}`}>
         {/* Header: Info ordine */}
         <div className="flex items-start justify-between mb-4">
           <div>
-            <p className="text-white font-bold text-base">{orderLabel(order)}</p>
-            <p className="text-gray-400 text-xs mt-1">🕐 {formatTime(order.createdAt)}{order.desiredTime && <span className="text-red-400 ml-2">→ {order.desiredTime}</span>}</p>
-            {order.isPaid && <p className="text-green-400 text-xs font-bold mt-1">💳 Già pagato</p>}
+            <p className="text-gray-900 font-bold text-base">{orderLabel(order)}</p>
+            <p className="text-gray-700 text-xs mt-1">🕐 {formatTime(order.createdAt)}{order.desiredTime && <span className="text-red-600 ml-2">→ {order.desiredTime}</span>}</p>
+            {order.isPaid && <p className="text-red-600 text-xs font-bold mt-1">💳 Già pagato</p>}
           </div>
-          <span className={`text-xs font-bold px-3 py-1.5 rounded-full shrink-0 border ${minutes >= 10 ? "bg-red-600 text-white border-red-500" : "bg-gray-600 text-gray-300 border-gray-500"}`}>⏱ {minutes}m</span>
+          <span className={`text-xs font-bold px-3 py-1.5 rounded-full shrink-0 border ${minutes >= 10 ? "bg-red-600 text-white border-red-500" : "bg-gray-200 text-gray-900 border-gray-400"}`}>⏱ {minutes}m</span>
         </div>
-        {order.isUrgent && <p className="text-red-400 text-sm font-bold mb-4 animate-pulse">🔴 URGENTE</p>}
+        {order.isUrgent && <p className="text-red-600 text-sm font-bold mb-4 animate-pulse">🔴 URGENTE</p>}
 
         {/* Prodotti con ingredienti visibili */}
         <div className="space-y-3 mb-4">
           {order.items.map(item => (
-            <div key={item.cartId} className="bg-gray-600 rounded-lg p-3 border border-gray-500">
+            <div key={item.cartId} className="bg-gray-50 rounded-lg p-3 border border-gray-300">
               <div className="flex items-center gap-2 flex-wrap mb-2">
-                <span className="text-white font-bold text-sm">{item.quantity > 1 && <span className="text-red-400">×{item.quantity} </span>}{item.name}</span>
-                {item.size !== "normale" && <span className={`text-xs px-2 py-0.5 rounded font-bold border ${item.size === "maxi" ? "bg-red-600 border-red-500 text-red-200" : "bg-gray-500 border-gray-400 text-gray-200"}`}>{item.size.toUpperCase()}</span>}
+                <span className="text-gray-900 font-bold text-sm">{item.quantity > 1 && <span className="text-red-600">×{item.quantity} </span>}{item.name}</span>
+                {item.size !== "normale" && <span className={`text-xs px-2 py-0.5 rounded font-bold border ${item.size === "maxi" ? "bg-red-200 border-red-300 text-red-700" : "bg-gray-200 border-gray-400 text-gray-900"}`}>{item.size.toUpperCase()}</span>}
               </div>
               {/* Mostra ingredienti come elenco visibile (Punto 10) */}
-              {item.removedIngredients.length > 0 && <p className="text-red-400 font-bold text-sm mt-2">🚫 SENZA: {item.removedIngredients.join(", ")}</p>}
-              {item.addedIngredients.length > 0   && <p className="text-green-400 font-bold text-sm">➕ CON: {item.addedIngredients.map(x => x.name).join(", ")}</p>}
-              {item.notes && <p className="text-yellow-400 text-sm mt-1">📝 {item.notes}</p>}
-              {item.isHalf && item.halfPizza1 && item.halfPizza2 && <p className="text-red-400 text-sm font-bold mt-2">½ {item.halfPizza1.name} + ½ {item.halfPizza2.name}</p>}
+              {item.removedIngredients.length > 0 && <p className="text-red-600 font-bold text-sm mt-2">🚫 SENZA: {item.removedIngredients.join(", ")}</p>}
+              {item.addedIngredients.length > 0   && <p className="text-gray-900 font-bold text-sm">➕ CON: {item.addedIngredients.map(x => x.name).join(", ")}</p>}
+              {item.notes && <p className="text-red-600 text-sm mt-1">📝 {item.notes}</p>}
+              {item.isHalf && item.halfPizza1 && item.halfPizza2 && <p className="text-red-600 text-sm font-bold mt-2">½ {item.halfPizza1.name} + ½ {item.halfPizza2.name}</p>}
             </div>
           ))}
         </div>
 
         {order.extras?.length > 0 && (
-          <div className="bg-red-900/30 border border-red-700/50 rounded-lg p-3 mb-4">
-            <p className="text-red-300 text-xs font-bold mb-2">➕ Extra:</p>
-            {order.extras.map((e, i) => <p key={i} className="text-red-300 text-sm font-semibold">• {e.description}</p>)}
+          <div className="bg-red-50 border border-red-300 rounded-lg p-3 mb-4">
+            <p className="text-red-700 text-xs font-bold mb-2">➕ Extra:</p>
+            {order.extras.map((e, i) => <p key={i} className="text-red-700 text-sm font-semibold">• {e.description}</p>)}
           </div>
         )}
-        {order.orderNotes && <div className="bg-yellow-900/30 border border-yellow-700/50 rounded-lg p-3 mb-4"><p className="text-yellow-300 text-sm font-medium">📋 {order.orderNotes}</p></div>}
+        {order.orderNotes && <div className="bg-red-50 border border-red-300 rounded-lg p-3 mb-4"><p className="text-red-700 text-sm font-medium">📋 {order.orderNotes}</p></div>}
 
         {/* Bottone Pronto semplice - senza checklist (Punto 10) */}
         <button onClick={() => updateOrderStatus(order.id, "pronto")}
-          className="w-full font-bold py-3 rounded-xl text-base transition-all active:scale-[0.98] shadow-sm hover:shadow-md border bg-green-600 hover:bg-green-700 text-white border-green-500">
+          className="w-full font-bold py-3 rounded-xl text-base transition-all active:scale-[0.98] shadow-sm hover:shadow-md border bg-red-600 hover:bg-red-700 text-white border-red-500">
           🚀 Pronto!
         </button>
       </div>
@@ -150,35 +150,35 @@ if (loading) return <div className="flex items-center justify-center h-64"><p cl
 
   const ConclusiList = () => (
     <div className="space-y-2">
-      {conclusi.length === 0 && <p className="text-gray-400 text-sm text-center mt-10 font-medium">Nessun ordine pronto</p>}
+      {conclusi.length === 0 && <p className="text-gray-600 text-sm text-center mt-10 font-medium">Nessun ordine pronto</p>}
       {conclusi.map(order => {
         const isOpen = expanded.has(order.id);
         return (
-          <div key={order.id} className="bg-gray-700 rounded-xl border border-gray-600 overflow-hidden hover:shadow-sm transition-shadow shadow-sm">
-            <button onClick={() => toggleExpanded(order.id)} className="w-full p-4 text-left flex items-center justify-between gap-2 hover:bg-gray-600 active:bg-gray-600 transition-colors">
+          <div key={order.id} className="bg-gray-100 rounded-xl border border-gray-400 overflow-hidden hover:shadow-sm transition-shadow shadow-sm">
+            <button onClick={() => toggleExpanded(order.id)} className="w-full p-4 text-left flex items-center justify-between gap-2 hover:bg-gray-200 active:bg-gray-200 transition-colors">
               <div className="flex-1 min-w-0">
-                <p className="text-white text-sm font-bold truncate">{orderLabel(order)}</p>
+                <p className="text-gray-900 text-sm font-bold truncate">{orderLabel(order)}</p>
                 <div className="flex gap-2 mt-1">
-                  <p className="text-gray-400 text-xs">{formatTime(order.createdAt)}</p>
-                  {order.isPaid && <p className="text-green-400 text-xs font-bold">💳 Pagato</p>}
+                  <p className="text-gray-700 text-xs">{formatTime(order.createdAt)}</p>
+                  {order.isPaid && <p className="text-red-600 text-xs font-bold">💳 Pagato</p>}
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-red-400 text-sm font-bold">€{order.total.toFixed(2)}</span>
-                <span className="text-gray-400 text-sm">{isOpen ? "▲" : "▼"}</span>
+                <span className="text-red-600 text-sm font-bold">€{order.total.toFixed(2)}</span>
+                <span className="text-gray-700 text-sm">{isOpen ? "▲" : "▼"}</span>
               </div>
             </button>
             {isOpen && (
-              <div className="border-t border-gray-600 p-4 space-y-1.5 bg-gray-600">
+              <div className="border-t border-gray-300 p-4 space-y-1.5 bg-gray-50">
                 {order.items.map(item => (
-                  <div key={item.cartId} className="text-sm text-gray-300">
-                    <span className="text-white font-medium">{item.quantity > 1 && <span className="text-red-400">×{item.quantity} </span>}{item.name}{item.size !== "normale" && <span className="text-red-400"> [{item.size}]</span>}</span>
-                    {item.removedIngredients.length > 0 && <p className="text-red-400 pl-2 text-xs font-medium">✗ {item.removedIngredients.join(", ")}</p>}
-                    {item.addedIngredients.length > 0   && <p className="text-green-400 pl-2 text-xs font-medium">+ {item.addedIngredients.map(x => x.name).join(", ")}</p>}
-                    {item.notes && <p className="text-yellow-400 pl-2 text-xs">📝 {item.notes}</p>}
+                  <div key={item.cartId} className="text-sm text-gray-700">
+                    <span className="text-gray-900 font-medium">{item.quantity > 1 && <span className="text-red-600">×{item.quantity} </span>}{item.name}{item.size !== "normale" && <span className="text-red-600"> [{item.size}]</span>}</span>
+                    {item.removedIngredients.length > 0 && <p className="text-red-600 pl-2 text-xs font-medium">✗ {item.removedIngredients.join(", ")}</p>}
+                    {item.addedIngredients.length > 0   && <p className="text-gray-900 pl-2 text-xs font-medium">+ {item.addedIngredients.map(x => x.name).join(", ")}</p>}
+                    {item.notes && <p className="text-red-600 pl-2 text-xs">📝 {item.notes}</p>}
                   </div>
                 ))}
-                {order.isPaid && <p className="text-green-400 text-xs font-semibold mt-2">✅ Pagato {order.paymentMethod === "contanti" ? "💵 contanti" : "💳 carta"}</p>}
+                {order.isPaid && <p className="text-red-600 text-xs font-semibold mt-2">✅ Pagato {order.paymentMethod === "contanti" ? "💵 contanti" : "💳 carta"}</p>}
               </div>
             )}
           </div>
@@ -188,24 +188,29 @@ if (loading) return <div className="flex items-center justify-center h-64"><p cl
   );
 
   return (
-    <div className="h-[calc(100vh-100px)] md:h-[calc(100vh-80px)] flex flex-col gap-4 overflow-hidden bg-gray-800 p-4 md:p-6">
-      <div className="flex items-center justify-between shrink-0 bg-gray-700 px-6 py-4 rounded-xl border border-gray-600 shadow-sm">
-        <h1 className="text-white text-2xl md:text-3xl font-bold">🍕 Preparazione</h1>
-        <div className="flex gap-2 text-sm font-bold">
-          <span className={`px-4 py-2 rounded-full border transition-all ${inPreparazione.length > 0 ? "bg-red-600 text-white border-red-500 shadow-md" : "bg-gray-600 text-gray-300 border-gray-500"}`}>👨‍🍳 {inPreparazione.length}</span>
-          <span className="bg-green-600 text-white px-4 py-2 rounded-full shadow-sm border border-green-500">✅ {conclusi.length}</span>
+    <div className="h-[calc(100vh-100px)] md:h-[calc(100vh-80px)] flex flex-col gap-4 overflow-hidden bg-gray-50">
+      <div className="flex items-center justify-between px-6 py-4 shrink-0 border-b border-gray-300 bg-gray-100">
+        <h1 className="text-gray-900 text-2xl md:text-3xl font-bold">🍕 Preparazione</h1>
+        <div className="flex items-center gap-4">
+          <span className="text-gray-700 text-sm font-medium hidden sm:inline"></span>
+          <div className="flex items-center gap-2">
+            <span className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${inPreparazione.length > 0 ? "bg-red-600 text-white shadow-md" : "bg-gray-200 text-gray-700"}`}>
+              👨‍🍳 {inPreparazione.length}
+            </span>
+            {conclusi.length > 0 && <span className="bg-red-100 text-red-700 px-3 py-2 rounded-full text-xs font-bold shadow-md">✅ {conclusi.length}</span>}
+          </div>
         </div>
       </div>
 
       {/* Mobile tabs */}
-      <div className="md:hidden flex gap-2 shrink-0">
+      <div className="md:hidden flex gap-2 px-4 py-3 shrink-0 bg-gray-100 border-b border-gray-300">
         <button onClick={() => setMobileTab("pronti")}
-          className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all relative border ${mobileTab === "pronti" ? "bg-red-600 text-white border-red-500 shadow-md" : "bg-gray-700 text-gray-300 border-gray-600"}`}>
+          className={`flex-1 py-2.5 rounded-lg font-semibold text-sm transition-all relative ${mobileTab === "pronti" ? "bg-red-600 text-white shadow-md" : "bg-gray-200 text-gray-900 hover:bg-gray-300"}`}>
           👨‍🍳 In preparazione
-          {inPreparazione.length > 0 && <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">{inPreparazione.length}</span>}
+          {inPreparazione.length > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">{inPreparazione.length}</span>}
         </button>
         <button onClick={() => setMobileTab("conclusi")}
-          className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all border ${mobileTab === "conclusi" ? "bg-green-600 text-white border-green-500 shadow-md" : "bg-gray-700 text-gray-300 border-gray-600"}`}>
+          className={`flex-1 py-2.5 rounded-lg font-semibold text-sm transition-all ${mobileTab === "conclusi" ? "bg-red-600 text-white shadow-md" : "bg-gray-200 text-gray-900 hover:bg-gray-300"}`}>
           ✅ Pronti ({conclusi.length})
         </button>
       </div>
