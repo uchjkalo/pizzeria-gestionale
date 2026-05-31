@@ -27,6 +27,7 @@ export interface Order {
   total: number; createdAt: Date; updatedAt: Date;
   isCancelled?: boolean; cancelledAt?: Date;
   isPaid?: boolean; paymentMethod?: "contanti" | "carta"; felice?: boolean; paidAt?: Date;
+  isPreparationStarted?: boolean; completedFrittiItems?: Set<string>; completedCucinaItems?: Set<string>;
 }
 
 export interface KitchenTask {

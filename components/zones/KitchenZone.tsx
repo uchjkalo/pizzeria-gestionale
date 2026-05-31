@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { subscribeToActiveOrders, updateOrderStatus, cancelOrder } from "@/lib/orders";
+import { subscribeToActiveOrders, updateOrderStatus, cancelOrder, updateOrder } from "@/lib/orders";
 import { subscribeToTasks, subscribeToAllTasks, createKitchenTask, completeTask, deleteTask, updateTaskDescription } from "@/lib/kitchen";
 import { Order, KitchenTask } from "@/types";
 import { menu } from "@/lib/menu";
@@ -115,6 +115,7 @@ export default function KitchenZone({ zone }: Props) {
 
   const handleStartPrep = async (order: Order) => {
     await updateOrderStatus(order.id, "preparazione");
+    await updateOrder(order.id, { isPreparationStarted: true });
     const prepTasks = generatePrepTasks(order);
     for (const desc of prepTasks) {
       await createKitchenTask({ orderId: order.id, description: desc, zone: "preparazione", completed: false });
@@ -141,6 +142,11 @@ export default function KitchenZone({ zone }: Props) {
 
   const cats      = zone === "cucina" ? CUCINA_CATS : FRITTURE_CATS;
   const zoneLabel = zone === "cucina" ? "🍳 Cucina" : "🍟 Fritture";
+  
+  // Filtro Punto 6: In Fritture, mostra ordini solo se "Inizia Preparazione" cliccato
+  const filteredOrders = zone === "cucina" 
+    ? orders 
+    : orders.filter(o => o.isPreparationStarted === true);
 
   const autoTasksFromOrder = (order: Order): string[] => {
     return order.items.filter(i => cats.includes(i.category)).flatMap(i => {
@@ -159,6 +165,8 @@ export default function KitchenZone({ zone }: Props) {
   const OrderCard = ({ order }: { order: Order }) => {
     const minutes    = minutesSince(order.createdAt);
     const relItems   = order.items.filter(i => cats.includes(i.category));
+    // Punto 5/8: In Cucina mostra anche item da Fritture con colore rosso chiaro
+    const frittiItems = zone === "cucina" ? order.items.filter(i => FRITTURE_CATS.includes(i.category)) : [];
     const isDeleting = confirmDelete === order.id;
     
     return (
@@ -196,6 +204,21 @@ export default function KitchenZone({ zone }: Props) {
               {item.addedIngredients.length > 0   && <p className="text-gray-700 font-bold">➕ AGGIUNGI: {item.addedIngredients.map(i => i.name).join(", ")}</p>}
               {item.manualAdditions?.length > 0   && <p className="text-red-700 font-bold">✏️ EXTRA: {item.manualAdditions.map(m => m.name).join(", ")}</p>}
               {item.notes && <p className="text-gray-700">📝 {item.notes}</p>}
+            </div>
+          ))}
+          {/* Punto 5/8: Fritti items in Cucina view con colore rosso chiaro */}
+          {frittiItems.map(item => (
+            <div key={item.cartId} className="rounded-lg p-3 border bg-red-100 border-red-200">
+              <div className="flex items-center gap-2 flex-wrap mb-2">
+                <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded font-bold">🍟 FRITTURE</span>
+                <span className="font-bold text-base text-red-800">
+                  {item.quantity > 1 && <span className="text-red-600">×{item.quantity} </span>}{item.name}
+                </span>
+                {item.size !== "normale" && <span className={`text-sm px-2 py-0.5 rounded font-bold bg-red-200 text-red-700`}>{item.size.toUpperCase()}</span>}
+              </div>
+              {item.removedIngredients.length > 0 && <p className="text-red-700 font-bold">🚫 SENZA: {item.removedIngredients.join(", ")}</p>}
+              {item.addedIngredients.length > 0   && <p className="text-red-800 font-bold">➕ AGGIUNGI: {item.addedIngredients.map(i => i.name).join(", ")}</p>}
+              {item.notes && <p className="text-red-700">📝 {item.notes}</p>}
             </div>
           ))}
         </div>
@@ -353,8 +376,8 @@ export default function KitchenZone({ zone }: Props) {
         <div className="flex items-center gap-4">
           <span className="text-gray-700 text-sm font-medium hidden sm:inline">{formatTime(now)}</span>
           <div className="flex items-center gap-2">
-            <span className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${orders.length > 0 ? "bg-red-600 text-white shadow-md" : "bg-gray-200 text-gray-700"}`}>
-              {orders.length} ordini
+            <span className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${filteredOrders.length > 0 ? "bg-red-600 text-white shadow-md" : "bg-gray-200 text-gray-700"}`}>
+              {filteredOrders.length} ordini
             </span>
             {tasks.length > 0 && <span className="bg-red-600 text-white px-3 py-2 rounded-full text-xs font-bold shadow-md">{tasks.length} task</span>}
           </div>
@@ -366,7 +389,7 @@ export default function KitchenZone({ zone }: Props) {
         <button onClick={() => setMobileTab("ordini")}
           className={`flex-1 py-2.5 rounded-lg font-semibold text-sm transition-all relative ${mobileTab === "ordini" ? "bg-red-600 text-white shadow-md" : "bg-gray-200 text-gray-900 hover:bg-gray-300"}`}>
           📋 Ordini
-          {orders.length > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">{orders.length}</span>}
+          {filteredOrders.length > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">{filteredOrders.length}</span>}
         </button>
         <button onClick={() => setMobileTab("task")}
           className={`flex-1 py-2.5 rounded-lg font-semibold text-sm transition-all relative ${mobileTab === "task" ? "bg-red-600 text-white shadow-md" : "bg-gray-200 text-gray-900 hover:bg-gray-300"}`}>
@@ -381,8 +404,8 @@ export default function KitchenZone({ zone }: Props) {
         <div className="md:hidden flex-1 overflow-hidden flex flex-col">
           {mobileTab === "ordini" ? (
             <div className="flex-1 overflow-y-auto space-y-3">
-              {orders.length === 0 && <div className="flex flex-col items-center justify-center h-40 text-gray-600"><p className="text-4xl mb-2">☕</p><p className="font-medium">Nessun ordine</p></div>}
-              {orders.map(o => <OrderCard key={o.id} order={o} />)}
+              {filteredOrders.length === 0 && <div className="flex flex-col items-center justify-center h-40 text-gray-600"><p className="text-4xl mb-2">☕</p><p className="font-medium">Nessun ordine</p></div>}
+              {filteredOrders.map(o => <OrderCard key={o.id} order={o} />)}
             </div>
           ) : (
             <TaskPanel />
@@ -400,8 +423,8 @@ export default function KitchenZone({ zone }: Props) {
               <span className="text-red-700">20+ min / urgente</span>
             </div>
             <div className="flex-1 overflow-y-auto space-y-4">
-              {orders.length === 0 && <div className="flex flex-col items-center justify-center h-40 text-gray-600"><p className="text-4xl mb-2">☕</p><p className="font-medium">Nessun ordine</p></div>}
-              {orders.map(o => <OrderCard key={o.id} order={o} />)}
+              {filteredOrders.length === 0 && <div className="flex flex-col items-center justify-center h-40 text-gray-600"><p className="text-4xl mb-2">☕</p><p className="font-medium">Nessun ordine</p></div>}
+              {filteredOrders.map(o => <OrderCard key={o.id} order={o} />)}
             </div>
           </div>
 
